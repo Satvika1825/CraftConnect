@@ -1,0 +1,13 @@
+GET http://localhost:3000/cart-api
+###
+GET http://localhost:3000/user-api
+### 
+GET http://localhost:3000/admin-api
+###
+GET http://localhost:3000/orders-api
+###
+GET http://localhost:3000/product-api
+###
+GET http://localhost:3000/auth-api
+###
+GET http://localhost:3000/artisan-api
