@@ -5,6 +5,6 @@ const reviewSchema=mongoose.Schema({
   rating: { type: Number, min: 1, max: 5 },
   comment: { type: String },
   createdAt: { type: Date, default: Date.now }
-})
+},{"strict":"throw"})
 const reviewModel=mongoose.model('review',reviewSchema);
 module.exports=reviewModel;

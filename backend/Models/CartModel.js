@@ -8,6 +8,7 @@ const cartSchema=mongoose.Schema({
     }
   ],
   updatedAt: { type: Date, default: Date.now }
-})
+},{"strict":"throw"})
+
 const cartModel=mongoose.model('cart',cartSchema);
 module.exports=cartModel;

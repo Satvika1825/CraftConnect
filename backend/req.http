@@ -11,3 +11,61 @@ GET http://localhost:3000/product-api
 GET http://localhost:3000/auth-api
 ###
 GET http://localhost:3000/artisan-api
+###
+POST http://localhost:3000/user-api/user
+Content-Type: application/json
+
+{
+    "name":"user3",
+    "email":"user3@gmail.com",
+    "password":"123",
+    "role":"artisan",
+    "phone":"9012345678",
+    "address":{
+        "street":"pr street",
+        "city":"hyderabad",
+        "state":"telangana",
+        "country":"india",
+        "pincode":"500084"
+    },
+    "profileImage":"",
+    "createdAt":""
+}
+###
+POST http://localhost:3000/artisan-api/artisan
+Content-Type: application/json
+
+{
+    "userId":"68d547d29dc01a120f6a85e7",
+    "shopName":"artisan2 shop",
+    "bio":"we make pottery",
+    "craftType":"pottery",
+    "location":{
+        "street":"pr street",
+        "city":"hyderabad",
+        "state":"telangana",
+        "country":"india",
+        "pincode":"500084"
+    },
+    "portfolioImages":[""],
+    "isVerified":false,
+    "createdAt":""
+}
+
+###
+GET http://localhost:3000/artisan-api/artisans?craftType=handloom
+###
+GET http://localhost:3000/artisan-api/artisans/68d5493894806acabc27139e
+###
+PATCH http://localhost:3000/artisan-api/artisans/68d5493894806acabc27139e
+Content-Type: application/json
+
+{
+  "shopName": "Updated Artisan Shop",
+  "bio": "We now make pottery and sculptures",
+  "rating": 4.5,
+  "verified": true
+}
+
+###
+DELETE http://localhost:3000/artisan-api/artisans/68d5493894806acabc27139e

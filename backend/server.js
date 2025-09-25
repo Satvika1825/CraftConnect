@@ -23,6 +23,9 @@ mongoose.connect(process.env.DBURL)
     
 .catch(err=>console.log("error in db connection",err));
 
+app.use(exp.json());//to convert all incoming req data to json format
+
+//APIs
 app.use('/user-api',userapp)
 app.use('/admin-api',adminapp)
 app.use('/artisan-api',artisanapp)

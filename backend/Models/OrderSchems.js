@@ -23,6 +23,6 @@ const orderSchema=mongoose.Schema({
     pincode: String
   },
   createdAt: { type: Date, default: Date.now }
-})
+},{"strict":"throw"})
 const orderModel=mongoose.model('order',orderSchema);
 module.exports=orderModel;

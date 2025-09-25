@@ -9,7 +9,7 @@ const productSchema=mongoose.Schema({
   images: [String], // array of URLs
   isApproved: { type: Boolean, default: false }, // admin approval
   createdAt: { type: Date, default: Date.now }
-})
+},{"strict":"throw"})
 
 const productModel=mongoose.model('product',productSchema);
 module.exports=productModel;
