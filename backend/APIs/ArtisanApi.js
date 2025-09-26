@@ -60,7 +60,7 @@ artisanapp.get("/artisans", expressAsyncHandler(async (req, res) => {
     // Fetch artisans with populated user details
     const artisans = await artisanModel.find(filter)
         .populate("userId", "name email profileImage phone address")
-        //.populate("products");
+        .populate("Product"); // if you have a Product model
 
     res.json({ count: artisans.length, artisans });
 }));
@@ -68,7 +68,7 @@ artisanapp.get("/artisans", expressAsyncHandler(async (req, res) => {
 artisanapp.get("/artisans/:id", expressAsyncHandler(async (req, res) => {
     const artisan = await artisanModel.findById(req.params.id)
         .populate("userId", "name email profileImage phone address")
-        //.populate("products"); // if you have a Product model
+        .populate("products"); // if you have a Product model
     if (!artisan) return res.status(404).json({ message: "Artisan not found" });
     res.json(artisan);
 }));

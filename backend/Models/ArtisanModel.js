@@ -1,5 +1,4 @@
 const mongoose=require('mongoose');
-
 const artisanSchema=mongoose.Schema({  
 
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
@@ -13,7 +12,7 @@ const artisanSchema=mongoose.Schema({
     country: String, 
     pincode: String 
 },
-  products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+  products: [{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
   rating: { type: Number, default: 0 },
   verified: { type: Boolean, default: false }
 },{"strict":"throw"})

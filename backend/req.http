@@ -16,32 +16,31 @@ POST http://localhost:3000/user-api/user
 Content-Type: application/json
 
 {
-    "name":"user3",
-    "email":"user3@gmail.com",
+    "name":"ravirajan",
+    "email":"ravirajan@gmail.com",
     "password":"123",
-    "role":"artisan",
+    "role":"user",
     "phone":"9012345678",
     "address":{
-        "street":"pr street",
+        "street":"sr nagar street",
         "city":"hyderabad",
         "state":"telangana",
         "country":"india",
         "pincode":"500084"
     },
-    "profileImage":"",
-    "createdAt":""
+    "profileImage":""
 }
 ###
 POST http://localhost:3000/artisan-api/artisan
 Content-Type: application/json
 
 {
-    "userId":"68d547d29dc01a120f6a85e7",
-    "shopName":"artisan2 shop",
-    "bio":"we make pottery",
-    "craftType":"pottery",
+    "userId":"68d6a694994de9fc92ab7ee0",
+    "shopName":"saree shop",
+    "bio":"we make sarees",
+    "craftType":"sarees",
     "location":{
-        "street":"pr street",
+        "street":"pr nagar street",
         "city":"hyderabad",
         "state":"telangana",
         "country":"india",
@@ -55,7 +54,7 @@ Content-Type: application/json
 ###
 GET http://localhost:3000/artisan-api/artisans?craftType=handloom
 ###
-GET http://localhost:3000/artisan-api/artisans/68d5493894806acabc27139e
+GET http://localhost:3000/artisan-api/artisans/68d665824ae4f29f0d32a6ba
 ###
 PATCH http://localhost:3000/artisan-api/artisans/68d5493894806acabc27139e
 Content-Type: application/json
@@ -69,3 +68,78 @@ Content-Type: application/json
 
 ###
 DELETE http://localhost:3000/artisan-api/artisans/68d5493894806acabc27139e
+###
+POST http://localhost:3000/product-api/products
+Content-Type: application/json
+
+{
+    "artisanId":"68d6a6ce994de9fc92ab7ee4",
+    "name":"painting",
+    "description":"A beautiful handmade painting.",
+    "price":999,
+    "category":"art",
+    "stock":100,
+    "images":["image1.jpg","image2.jpg"],
+    "rating":4.5,
+    "isApproved":false,
+    "createdAt":""
+}
+###
+GET http://localhost:3000/product-api/products?search=pot&category=pottery&minPrice=100&maxPrice=500&page=1&limit=5
+###
+GET http://localhost:3000/product-api/products/68d66865d585145d74b0364d
+###
+PUT http://localhost:3000/product-api/products/68d66865d585145d74b0364d
+Content-Type: application/json
+
+{
+    "name":"Updated Handmade Vase",
+    "description":"An updated beautiful handmade vase.",
+    "price":59.99,
+    "category":"Home Decor",
+    "stock":80,
+    "images":["updated_image1.jpg","updated_image2.jpg"],
+    "ratings":4.7,
+    "isApproved":true
+}
+###
+POST http://localhost:3000/cart-api/cart
+Content-Type: application/json
+
+{
+    "userId":"68d6a1384122d408dd590144",
+    "items":[
+        {
+            "productId":"68d6adfcd7127859089a1dc8",
+            "quantity":2
+        }
+    ],
+    "totalPrice":5000,
+    "createdAt":""
+}
+
+###
+GET http://localhost:3000/cart-api/cart/68d52e57bd582c0e1d35996f
+###
+PUT http://localhost:3000/cart-api/cart/68d52e57bd582c0e1d35996f/68d68b27a425b05c7fcea641
+Content-Type: application/json
+
+{
+    "quantity":3
+}
+
+###
+POST http://localhost:3000/orders-api/order
+Content-Type: application/json
+
+{
+  "userId": "68d6a1384122d408dd590144",
+  "shippingAddress": {
+    "street": "pr street",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "country": "India",
+    "pincode": "500084"
+  }
+}
+
