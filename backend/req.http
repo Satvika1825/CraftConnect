@@ -16,8 +16,8 @@ POST http://localhost:3000/user-api/user
 Content-Type: application/json
 
 {
-    "name":"ravirajan",
-    "email":"ravirajan@gmail.com",
+    "name":"radha",
+    "email":"radha@gmail.com",
     "password":"123",
     "role":"user",
     "phone":"9012345678",
@@ -74,8 +74,8 @@ Content-Type: application/json
 
 {
     "artisanId":"68d6a6ce994de9fc92ab7ee4",
-    "name":"painting",
-    "description":"A beautiful handmade painting.",
+    "name":"basket",
+    "description":"A beautiful handmade basket.",
     "price":999,
     "category":"art",
     "stock":100,
@@ -107,15 +107,9 @@ POST http://localhost:3000/cart-api/cart
 Content-Type: application/json
 
 {
-    "userId":"68d6a1384122d408dd590144",
-    "items":[
-        {
-            "productId":"68d6adfcd7127859089a1dc8",
-            "quantity":2
-        }
-    ],
-    "totalPrice":5000,
-    "createdAt":""
+    "userId":"68d7ebe722a572628362152a",
+    "productId":"68d7ec4822a572628362152e",
+    "quantity":2
 }
 
 ###
@@ -133,7 +127,14 @@ POST http://localhost:3000/orders-api/order
 Content-Type: application/json
 
 {
-  "userId": "68d6a1384122d408dd590144",
+  "userId": "68d7ebe722a572628362152a",
+    "items": [
+        {
+        "productId": "68d7ec4822a572628362152e",
+        "quantity": 2,
+        "price": 2500
+        }
+    ],
   "shippingAddress": {
     "street": "pr street",
     "city": "Hyderabad",
@@ -142,4 +143,35 @@ Content-Type: application/json
     "pincode": "500084"
   }
 }
+###
+GET http://localhost:3000/orders-api/orders
+Content-Type: application/json
 
+{
+  "userId": "68d7ebe722a572628362152a"
+}
+###
+GET http://localhost:3000/orders-api/order/68d7f10822a5726283621547
+###
+PUT http://localhost:3000/orders-api/order/68d7f10822a5726283621547/status
+Content-Type: application/json
+
+{
+  "status": "shipped"
+}
+###
+POST http://localhost:3000/review-api/reviews
+Content-Type: application/json
+
+{
+  "userId": "68d7ebe722a572628362152a",
+  "productId": "68d7ec4822a572628362152e",
+  "rating": 5,
+  "comment": "Excellent product! Highly recommend."
+}
+###
+GET http://localhost:3000/review-api/reviews/68d7ec4822a572628362152e
+###
+GET http://localhost:3000/admin-api/users
+###
+GET http://localhost:3000/admin-api/users/68d6a1384122d408dd590144/ban

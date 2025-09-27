@@ -1,47 +1,58 @@
 const exp=require('express');
 const cartapp=exp.Router();
 const cartModel=require('../Models/CartModel');
+const productModel=require('../Models/ProductModel');
+const expressAsyncHandler = require("express-async-handler");
 // ---------------- POST /cart → Add item to cart ----------------
-const mongoose = require('mongoose');
-cartapp.post('/cart', async (req, res) => {
-  try {
+cartapp.post(
+  "/cart",
+  expressAsyncHandler(async (req, res) => {
     const { userId, productId, quantity } = req.body;
 
-    let cart = await cartModel.findOne({ userId });
-
-    if (cart) {
-      // Check if product already exists in cart
-      const itemIndex = cart.items.findIndex(
-        item => item.productId && item.productId.toString() === productId
-      );
-
-      if (itemIndex > -1) {
-        cart.items[itemIndex].quantity += quantity;
-      } else {
-        cart.items.push({
-          productId: new mongoose.Types.ObjectId(productId),
-          quantity
-        });
-      }
-
-      cart.updatedAt = Date.now();
-      await cart.save();
-    } else {
-      // Create new cart
-      cart = new cartModel({
-        userId: new mongoose.Types.ObjectId(userId),
-        items: [{ productId: new mongoose.Types.ObjectId(productId), quantity }]
-      });
-      await cart.save();
+    // 1. Validate input
+    if (!userId || !productId) {
+      return res.status(400).json({ message: "userId and productId are required" });
     }
 
-    res.status(200).json(cart);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+    // 2. Check if product exists
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
+    // 3. Check stock
+    if (product.stock < quantity) {
+      return res.status(400).json({ message: "Not enough stock available" });
+    }
 
+    // 4. Check if user already has a cart
+    let cart = await cartModel.findOne({ userId });
+
+    if (!cart) {
+      // Create new cart
+      cart = new cartModel({
+        userId,
+        items: [{ productId, quantity }],
+      });
+    } else {
+      // Check if product already in cart
+      const existingItem = cart.items.find(
+        (item) => item.productId.toString() === productId
+      );
+
+      if (existingItem) {
+        existingItem.quantity += quantity; // increase quantity
+      } else {
+        cart.items.push({ productId, quantity }); // add new product
+      }
+    }
+
+    // 5. Save cart
+    await cart.save();
+
+    res.status(201).json({ message: "Item added to cart", cart });
+  })
+);
 // ---------------- GET /cart → View current user’s cart ----------------
 cartapp.get('/cart/:userId', async (req, res) => {
     try {
