@@ -1,23 +1,12 @@
-import Header from "../components/Header";
-import Hero from "../components/Hero";
-import CraftCategories from "../components/CraftCategories";
-import FeaturedProducts from "../components/FeaturedProducts";
-import ArtisanSpotlight from "../components/ArtisanSpotlight";
-import Footer from "../components/Footer";
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import Login from '@/components/Login';
+import RoleBasedApp from '@/components/RoleBasedApp';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main>
-        <Hero />
-        <CraftCategories />
-        <FeaturedProducts />
-        <ArtisanSpotlight />
-      </main>
-      <Footer />
-    </div>
-  );
+  const { user } = useAuth();
+
+  return user ? <RoleBasedApp /> : <Login />;
 };
 
 export default Index;

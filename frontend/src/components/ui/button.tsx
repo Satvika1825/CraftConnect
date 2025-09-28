@@ -15,11 +15,18 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Custom CraftConnect variants
+        craft: "bg-craft-terracotta text-white hover:bg-craft-terracotta/90 craft-transition craft-shadow hover:shadow-lg",
+        craftSecondary: "bg-craft-mustard text-craft-deep-red hover:bg-craft-mustard/90 craft-transition",
+        craftOutline: "border-2 border-craft-terracotta text-craft-terracotta bg-transparent hover:bg-craft-terracotta hover:text-white craft-transition",
+        craftGlow: "bg-craft-terracotta text-white hover:bg-craft-terracotta/90 craft-transition animate-craft-glow",
+        hero: "bg-gradient-to-r from-craft-terracotta to-craft-deep-red text-white hover:from-craft-terracotta/90 hover:to-craft-deep-red/90 craft-transition shadow-2xl hover:shadow-3xl transform hover:scale-105",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-lg px-10 text-lg",
         icon: "h-10 w-10",
       },
     },
