@@ -1,108 +1,113 @@
-import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Heart, User, LogOut, Home, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Home, 
-  ShoppingBag, 
-  User, 
-  LogOut, 
-  Package, 
-  Plus, 
-  ClipboardList,
-  Users,
-  Settings,
-  BarChart3
-} from 'lucide-react';
-import { UserRole } from '@/types/auth';
+import { useStore } from '@/lib/store';
+import { UserButton, useUser } from '@clerk/clerk-react';
 
-interface NavbarProps {
-  currentView: string;
-  onViewChange: (view: string) => void;
-}
+export const Navbar = () => {
+  const { userRole, cart } = useStore();
+  const { user } = useUser();
+  const navigate = useNavigate();
 
-const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
-  const { user, logout } = useAuth();
+  const handleLogout = () => {
+    useStore.getState().setUserRole(null);
+    useStore.getState().clearCart();
+    navigate('/');
+  };
 
-  const getNavigationItems = (role: UserRole) => {
-    switch (role) {
+  const getNavLinks = () => {
+    switch (userRole) {
       case 'customer':
-        return [
-          { id: 'home', label: 'Home', icon: Home },
-          { id: 'products', label: 'Products', icon: ShoppingBag },
-          { id: 'cart', label: 'Cart', icon: ShoppingBag },
-          { id: 'profile', label: 'Profile', icon: User },
-        ];
+        return (
+          <>
+            <Link to="/customer">
+              <Button variant="ghost" className="gap-2">
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+            </Link>
+            <Link to="/customer/products">
+              <Button variant="ghost" className="gap-2">
+                <Package className="h-4 w-4" />
+                Products
+              </Button>
+            </Link>
+            <Link to="/customer/liked">
+              <Button variant="ghost" className="gap-2">
+                <Heart className="h-4 w-4" />
+                Liked
+              </Button>
+            </Link>
+            <Link to="/customer/cart">
+              <Button variant="ghost" className="gap-2 relative">
+                <ShoppingCart className="h-4 w-4" />
+                Cart
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          </>
+        );
       case 'artisan':
-        return [
-          { id: 'dashboard', label: 'Dashboard', icon: Home },
-          { id: 'my-products', label: 'My Products', icon: Package },
-          { id: 'add-product', label: 'Add Product', icon: Plus },
-          { id: 'orders', label: 'Orders', icon: ClipboardList },
-          { id: 'profile', label: 'Profile', icon: User },
-        ];
+        return (
+          <>
+            <Link to="/artisan">
+              <Button variant="ghost" className="gap-2">
+                <Home className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+            <Link to="/artisan/products">
+              <Button variant="ghost" className="gap-2">
+                <Package className="h-4 w-4" />
+                My Products
+              </Button>
+            </Link>
+            <Link to="/artisan/add-product">
+              <Button variant="ghost">Add Product</Button>
+            </Link>
+            <Link to="/artisan/orders">
+              <Button variant="ghost">Orders</Button>
+            </Link>
+          </>
+        );
       case 'admin':
-        return [
-          { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-          { id: 'manage-users', label: 'Manage Users', icon: Users },
-          { id: 'manage-products', label: 'Manage Products', icon: Package },
-          { id: 'manage-orders', label: 'Manage Orders', icon: ClipboardList },
-          { id: 'settings', label: 'Settings', icon: Settings },
-        ];
+        return (
+          <>
+            <Link to="/admin">
+              <Button variant="ghost">Dashboard</Button>
+            </Link>
+            <Link to="/admin/users">
+              <Button variant="ghost">Users</Button>
+            </Link>
+            <Link to="/admin/products">
+              <Button variant="ghost">Products</Button>
+            </Link>
+            <Link to="/admin/orders">
+              <Button variant="ghost">Orders</Button>
+            </Link>
+          </>
+        );
       default:
-        return [];
+        return null;
     }
   };
 
-  const navigationItems = user ? getNavigationItems(user.role) : [];
-
   return (
-    <nav className="bg-card/95 backdrop-blur-md border-b border-border/50 sticky top-0 z-40">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="text-2xl font-serif font-bold text-craft-terracotta">
-              CraftConnect
-            </div>
-            {user && (
-              <div className="hidden md:flex items-center space-x-1 ml-4 text-sm text-muted-foreground">
-                <span>{user.avatar}</span>
-                <span>{user.name}</span>
-              </div>
-            )}
-          </div>
+    <nav className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <Link to="/" className="flex items-center gap-2">
+          <h1 className="text-2xl font-serif font-bold text-primary">CraftConnect</h1>
+        </Link>
 
-          {/* Navigation Items */}
+        <div className="flex items-center gap-4">
+          {getNavLinks()}
           {user && (
-            <div className="flex items-center space-x-1">
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentView === item.id;
-                
-                return (
-                  <Button
-                    key={item.id}
-                    variant={isActive ? "craft" : "ghost"}
-                    size="sm"
-                    onClick={() => onViewChange(item.id)}
-                    className="flex items-center space-x-2"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden md:inline">{item.label}</span>
-                  </Button>
-                );
-              })}
-              
-              {/* Logout Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={logout}
-                className="flex items-center space-x-2 text-destructive hover:text-destructive"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden md:inline">Logout</span>
-              </Button>
+            <div className="flex items-center gap-2">
+              <UserButton afterSignOutUrl="/" />
             </div>
           )}
         </div>
@@ -110,5 +115,3 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
     </nav>
   );
 };
-
-export default Navbar;

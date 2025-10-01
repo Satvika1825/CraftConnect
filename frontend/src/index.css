@@ -8,64 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* CraftConnect Design System - Indian Village Aesthetic */
-    --background: 35 24% 96%;
-    --foreground: 15 25% 15%;
+    --background: 42 35% 94%;
+    --foreground: 25 30% 20%;
 
-    --card: 35 30% 98%;
-    --card-foreground: 15 25% 15%;
+    --card: 42 40% 98%;
+    --card-foreground: 25 30% 20%;
 
-    --popover: 35 30% 98%;
-    --popover-foreground: 15 25% 15%;
+    --popover: 42 40% 98%;
+    --popover-foreground: 25 30% 20%;
 
-    /* Terracotta Primary */
-    --primary: 15 55% 46%;
-    --primary-foreground: 35 30% 98%;
-    --primary-glow: 15 55% 55%;
+    --primary: 14 49% 46%;
+    --primary-foreground: 42 35% 94%;
 
-    /* Mustard Secondary */
-    --secondary: 45 60% 55%;
-    --secondary-foreground: 15 25% 15%;
+    --secondary: 42 63% 55%;
+    --secondary-foreground: 25 30% 20%;
 
-    --muted: 35 20% 92%;
-    --muted-foreground: 15 15% 50%;
+    --muted: 42 25% 85%;
+    --muted-foreground: 25 15% 45%;
 
-    /* Teal Accent */
-    --accent: 175 55% 35%;
-    --accent-foreground: 35 30% 98%;
+    --accent: 175 51% 36%;
+    --accent-foreground: 42 35% 94%;
 
-    /* Deep Red for destructive */
-    --destructive: 0 55% 35%;
-    --destructive-foreground: 35 30% 98%;
+    --destructive: 0 51% 36%;
+    --destructive-foreground: 42 35% 94%;
 
-    --border: 35 15% 85%;
-    --input: 35 15% 90%;
-    --ring: 15 55% 46%;
+    --border: 42 20% 80%;
+    --input: 42 20% 88%;
+    --ring: 14 49% 46%;
 
-    /* Custom CraftConnect Variables */
-    --craft-terracotta: 15 55% 46%;
-    --craft-mustard: 45 60% 55%;
-    --craft-deep-red: 0 55% 35%;
-    --craft-beige: 35 24% 96%;
-    --craft-teal: 175 55% 35%;
+    --radius: 0.75rem;
     
-    /* Gradients */
-    --gradient-warm: linear-gradient(135deg, hsl(var(--craft-terracotta)), hsl(var(--craft-mustard)));
-    --gradient-earth: linear-gradient(180deg, hsl(var(--craft-beige)), hsl(var(--muted)));
-    --gradient-craft: linear-gradient(45deg, hsl(var(--craft-teal)), hsl(var(--craft-deep-red)));
+    --terracotta: 14 49% 46%;
+    --mustard: 42 63% 55%;
+    --deep-red: 0 51% 36%;
+    --teal: 175 51% 36%;
+    --warm-beige: 42 35% 94%;
     
-    /* Shadows */
-    --shadow-craft: 0 8px 25px -8px hsl(var(--craft-terracotta) / 0.3);
-    --shadow-warm: 0 4px 20px -4px hsl(var(--craft-mustard) / 0.2);
-    
-    /* Textures & Patterns */
-    --texture-jute: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23b35c38' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    
-    /* Animations */
-    --transition-craft: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --transition-warm: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --radius: 0.5rem;
+    /* Indian-inspired design tokens */
+    --gradient-hero: linear-gradient(135deg, hsl(14 49% 46% / 0.95), hsl(0 51% 36% / 0.9));
+    --gradient-card: linear-gradient(to bottom, hsl(42 40% 98%), hsl(42 35% 96%));
+    --gradient-accent: linear-gradient(90deg, hsl(42 63% 55%), hsl(14 49% 46%));
+    --shadow-soft: 0 4px 20px -2px hsl(14 49% 46% / 0.15);
+    --shadow-medium: 0 8px 30px -4px hsl(14 49% 46% / 0.25);
+    --shadow-glow: 0 0 40px hsl(42 63% 55% / 0.3);
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
 
@@ -85,43 +71,42 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Dark mode with warm, earthy tones */
-    --background: 15 25% 8%;
-    --foreground: 35 24% 92%;
+    --background: 25 20% 12%;
+    --foreground: 42 35% 94%;
 
-    --card: 15 25% 10%;
-    --card-foreground: 35 24% 92%;
+    --card: 25 20% 15%;
+    --card-foreground: 42 35% 94%;
 
-    --popover: 15 25% 10%;
-    --popover-foreground: 35 24% 92%;
+    --popover: 25 20% 15%;
+    --popover-foreground: 42 35% 94%;
 
-    --primary: 15 55% 55%;
-    --primary-foreground: 15 25% 8%;
-    --primary-glow: 15 55% 65%;
+    --primary: 14 49% 46%;
+    --primary-foreground: 42 35% 94%;
 
-    --secondary: 45 50% 45%;
-    --secondary-foreground: 15 25% 8%;
+    --secondary: 42 63% 55%;
+    --secondary-foreground: 25 20% 12%;
 
-    --muted: 15 20% 15%;
-    --muted-foreground: 35 15% 65%;
+    --muted: 25 15% 25%;
+    --muted-foreground: 42 20% 65%;
 
-    --accent: 175 45% 45%;
-    --accent-foreground: 15 25% 8%;
+    --accent: 175 51% 36%;
+    --accent-foreground: 42 35% 94%;
 
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 35 24% 92%;
+    --destructive: 0 51% 36%;
+    --destructive-foreground: 42 35% 94%;
 
-    --border: 15 20% 20%;
-    --input: 15 20% 15%;
-    --ring: 15 55% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 25 15% 25%;
+    --input: 25 15% 25%;
+    --ring: 14 49% 46%;
+    
+    --sidebar-background: 25 20% 12%;
+    --sidebar-foreground: 42 35% 94%;
+    --sidebar-primary: 14 49% 46%;
+    --sidebar-primary-foreground: 42 35% 94%;
+    --sidebar-accent: 25 15% 25%;
+    --sidebar-accent-foreground: 42 35% 94%;
+    --sidebar-border: 25 15% 25%;
+    --sidebar-ring: 14 49% 46%;
   }
 }
 
@@ -132,45 +117,37 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background-image: var(--texture-jute);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
   }
 }
 
-@layer components {
-  .craft-gradient {
-    background: var(--gradient-warm);
+@layer utilities {
+  .pattern-dots {
+    background-image: radial-gradient(hsl(14 49% 46% / 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
   
-  .craft-shadow {
-    box-shadow: var(--shadow-craft);
+  .pattern-grid {
+    background-image: linear-gradient(hsl(14 49% 46% / 0.05) 1px, transparent 1px),
+                      linear-gradient(90deg, hsl(14 49% 46% / 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
   }
   
-  .craft-transition {
-    transition: var(--transition-craft);
+  .border-decorative {
+    border-image: linear-gradient(90deg, hsl(42 63% 55%), hsl(14 49% 46%), hsl(42 63% 55%)) 1;
   }
   
-  .craft-button {
-    @apply craft-transition hover:scale-105 active:scale-95;
+  .hover-lift {
+    transition: var(--transition-smooth);
   }
   
-  .craft-card {
-    @apply bg-card border border-border/50 rounded-lg craft-shadow backdrop-blur-sm;
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-medium);
   }
   
-  .texture-overlay::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: var(--texture-jute);
-    opacity: 0.3;
-    pointer-events: none;
+  .glass-effect {
+    background: hsl(42 40% 98% / 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(42 20% 80% / 0.3);
   }
 }
