@@ -2,9 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, CartItem, UserRole } from '@/types';
 
+// Initialize store with mock data
+import { mockProducts } from './mockData';
+
 interface StoreState {
   userRole: UserRole | null;
   setUserRole: (role: UserRole) => void;
+  resetUserRole: () => void; // Added resetUserRole for clearing the role
   cart: CartItem[];
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
@@ -19,14 +23,15 @@ interface StoreState {
   deleteProduct: (id: string) => void;
 }
 
-// Initialize store with mock data
-import { mockProducts } from './mockData';
-
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
+      // User Role Management
       userRole: null,
       setUserRole: (role) => set({ userRole: role }),
+      resetUserRole: () => set({ userRole: null }), // Reset user role
+
+      // Cart Management
       cart: [],
       addToCart: (product) =>
         set((state) => {
@@ -53,6 +58,8 @@ export const useStore = create<StoreState>()(
           ),
         })),
       clearCart: () => set({ cart: [] }),
+
+      // Liked Products Management
       likedProducts: [],
       toggleLike: (productId) =>
         set((state) => ({
@@ -60,6 +67,8 @@ export const useStore = create<StoreState>()(
             ? state.likedProducts.filter((id) => id !== productId)
             : [...state.likedProducts, productId],
         })),
+
+      // Product Management
       products: mockProducts,
       setProducts: (products) => set({ products }),
       addProduct: (product) =>
@@ -76,7 +85,7 @@ export const useStore = create<StoreState>()(
         })),
     }),
     {
-      name: 'craftconnect-storage',
+      name: 'craftconnect-storage', // Key for local storage
       onRehydrateStorage: () => (state) => {
         if (state && state.products.length === 0) {
           state.setProducts(mockProducts);

@@ -3,29 +3,47 @@ const artisanapp = exp.Router();
 const expressAsyncHandler = require("express-async-handler");
 const artisanModel = require("../Models/ArtisanModel");
 const userModel = require("../Models/UserModel");
+const cors = require("cors");
 
+artisanapp.use(cors(
+    { origin: 'http://localhost:8080', // allow requests from any origin
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'], // allow these HTTP methods
+    credentials: true } // allow credentials (cookies, authorization headers, etc.)
+));
 // Create artisan profile
 artisanapp.post(
   "/artisan",
   expressAsyncHandler(async (req, res) => {
-    const { userId, shopName, bio, craftType, location } = req.body;
+    try {
+      const { userId, shopName, bio, craftType, location } = req.body;
 
-    // check if user exists & has artisan role
-    const user = await userModel.findById(userId);
-    if (!user || user.role !== "artisan") {
-      return res.status(400).send({ message: "User must exist with role artisan" });
+      // find user by clerkId
+      const user = await userModel.findOne({ clerkId: userId });
+      if (!user || user.role !== "artisan") {
+        return res.status(400).json({ message: "User must exist with role artisan" });
+      }
+
+      // check if artisan profile already exists
+      const artisanInDb = await artisanModel.findOne({ userId: user._id });
+      if (artisanInDb) {
+        return res.status(400).json({ message: "Artisan profile already exists" });
+      }
+
+      // Create new artisan with user's MongoDB _id
+      const newArtisan = new artisanModel({
+        userId: user._id, // Use MongoDB _id instead of clerkId
+        shopName,
+        bio,
+        craftType,
+        location
+      });
+
+      const artisanDoc = await newArtisan.save();
+      res.status(201).json({ message: "Artisan profile created", artisan: artisanDoc });
+    } catch (error) {
+      console.error("Artisan creation error:", error);
+      res.status(500).json({ message: "Error creating artisan profile", error: error.message });
     }
-
-    // check if artisan profile already exists
-    const artisanInDb = await artisanModel.findOne({ userId });
-    if (artisanInDb) {
-      return res.status(400).send({ message: "Artisan profile already exists" });
-    }
-
-    const newArtisan = new artisanModel({ userId, shopName, bio, craftType, location });
-    const artisanDoc = await newArtisan.save();
-
-    res.status(201).send({ message: "Artisan profile created", artisan: artisanDoc });
   })
 );
 

@@ -1,22 +1,30 @@
-const mongoose=require('mongoose');
-const artisanSchema=mongoose.Schema({  
+const mongoose = require('mongoose');
 
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
-  shopName: { type: String, required: true },
-  bio: { type: String },
-  craftType: { type: String }, // pottery, weaving, etc.
+const artisanSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true
+  },
+  shopName: {
+    type: String,
+    required: true
+  },
+  bio: String,
+  craftType: String,
   location: {
-    street: String, 
-    city: String, 
-    state: String, 
-    country: String, 
-    pincode: String 
-},
-  products: [{ type: mongoose.Schema.Types.ObjectId, ref: "product" }],
-  rating: { type: Number, default: 0 },
-  verified: { type: Boolean, default: false }
-},{"strict":"throw"})
+    type: String,  // Changed from object to string
+    required: true
+  },
+  rating: {
+    type: Number,
+    default: 0
+  },
+  verified: {
+    type: Boolean,
+    default: false
+  }
+}, { timestamps: true });
 
-const artisanModel=mongoose.model('artisan',artisanSchema);//all the operations are performed on the model i.e data base operations
-
-module.exports=artisanModel;
+const artisanModel = mongoose.model('artisan', artisanSchema);
+module.exports = artisanModel;
