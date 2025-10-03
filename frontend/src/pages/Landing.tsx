@@ -32,12 +32,48 @@ export default function Landing() {
   const { userRole, setUserRole } = useStore();
   const { toast } = useToast();
   const [showArtisanForm, setShowArtisanForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [artisanDetails, setArtisanDetails] = useState({
     shopName: '',
     bio: '',
     craftType: '',
     location: ''
   });
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (isSignedIn && user) {
+        try {
+          const response = await axios.get(`http://localhost:3000/user-api/users/${user.id}`);
+          if (response.data.role) {
+            setUserRole(response.data.role);
+            navigate(`/${response.data.role}`);
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkUserRole();
+  }, [isSignedIn, user, navigate, setUserRole]);
+
+  useEffect(() => {
+    if (!isSignedIn && userRole) {
+      setUserRole(null);
+    } else if (isSignedIn && userRole) {
+      navigate(`/${userRole}`);
+    }
+  }, [isSignedIn, userRole, navigate, setUserRole]);
+
+  // Add loading state check
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (!isSignedIn && userRole) {
