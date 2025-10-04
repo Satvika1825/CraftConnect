@@ -43,16 +43,30 @@ export default function Landing() {
     const checkUserRole = async () => {
       if (isSignedIn && user) {
         try {
-          const response = await axios.get(`http://localhost:3000/user-api/users/${user.id}`);
+          const response = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
           if (response.data.role) {
             setUserRole(response.data.role);
             navigate(`/${response.data.role}`);
           }
         } catch (error) {
+           if (error.response?.status === 404) {
+          // User doesn't exist yet, show role selection
+          setUserRole(null);
+          setShowArtisanForm(false);
+        } else {
           console.error('Error fetching user role:', error);
+          toast({
+            title: "Error",
+            description: "Could not fetch user data",
+            variant: "destructive"
+          });
         }
+        }finally {
+        setIsLoading(false);
       }
+      }else{
       setIsLoading(false);
+      }
     };
 
     checkUserRole();
@@ -85,7 +99,7 @@ export default function Landing() {
 
   const handleRoleSelection = async (role: 'customer' | 'artisan' | 'admin') => {
     try {
-      await axios.post('http://localhost:3000/user-api/user', {
+     const response= await axios.post('http://localhost:3000/user-api/user', {
       clerkId: user?.id,
       email: user?.emailAddresses?.[0]?.emailAddress || '',
       role,
@@ -93,13 +107,14 @@ export default function Landing() {
     }, {
         headers: { 'Content-Type': 'application/json' }
       });
-      
+      if(response.data && response.data.user){
       if (role === 'artisan') {
         setShowArtisanForm(true);
       } else {
-        setUserRole(role);
+       
         navigate(`/${role}`);
       }
+    }
     } catch (error: any) {
       toast({
         title: 'Error',
