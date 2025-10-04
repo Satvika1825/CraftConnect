@@ -34,9 +34,9 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
 }));
 
 // ---------------- GET /users/:id → Get profile details ----------------
-userapp.get('/users/:id', expressAsyncHandler(async (req, res) => {
+userapp.get('/user/:clerkId', expressAsyncHandler(async (req, res) => {
     try {
-        const user = await userModel.findById(req.params.id);
+        const user = await userModel.findOne({clerkId: req.params.clerkId });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
