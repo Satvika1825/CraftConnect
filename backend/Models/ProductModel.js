@@ -1,17 +1,40 @@
-const mongoose=require('mongoose');
-const productSchema=mongoose.Schema({
-    artisanId: { type: mongoose.Schema.Types.ObjectId, ref: "artisan", required: true },
-  name: { type: String, required: true },
-  description: { type: String },
-  category: { type: String }, // pottery, textile, jewelry, etc.
-  price: { type: Number, required: true },
-  stock: { type: Number, default: 1 },
-  images: [String], // array of URLs
-  rating: { type: Number, default: 0 }, // average rating
-  isApproved: { type: Boolean, default: false }, // admin approval
-  createdAt: { type: Date, default: Date.now },
+const mongoose = require('mongoose');
 
-},{"strict":"throw"})
+const productSchema = new mongoose.Schema({
+  artisanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'artisan',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  category: {
+    type: String,
+    required: true
+  },
+  stock: {
+    type: Number,
+    default: 0
+  },
+  image: {  // Added image field
+    type: String,
+    required: true
+  },
+  approved: {
+    type: Boolean,
+    default: false
+  }
+}, { timestamps: true });
 
-const productModel=mongoose.model('product',productSchema);
-module.exports=productModel;
+const productModel = mongoose.model('product', productSchema);
+module.exports = productModel;

@@ -12,10 +12,11 @@ const artisanSchema = new mongoose.Schema({
   },
   bio: String,
   craftType: String,
-  location: {
-    type: String,  // Changed from object to string
-    required: true
-  },
+  location: String,
+  products: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'product'  // Make sure this matches your product model name
+  }],
   rating: {
     type: Number,
     default: 0

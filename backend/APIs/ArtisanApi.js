@@ -48,42 +48,30 @@ artisanapp.post(
 );
 
 // Get artisans with filters and populated user details
-
 artisanapp.get("/artisans", expressAsyncHandler(async (req, res) => {
-    const { craftType, shopName, location, verified, rating } = req.query;
-
-    // Build filter object dynamically
-    let filter = {};
-
-    if (craftType) {
-        filter.craftType = { $regex: craftType, $options: "i" }; // case-insensitive match
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
     }
 
-    if (shopName) {
-        filter.shopName = { $regex: shopName, $options: "i" }; // partial search
+    const artisan = await artisanModel.findOne({ userId })
+      .populate('userId')
+      .populate('products');  // Now this will work because products is defined in schema
+
+    if (!artisan) {
+      return res.status(404).json({ message: "Artisan not found" });
     }
 
-    if (location) {
-        filter.location = { $regex: location, $options: "i" };
-    }
-
-    if (verified !== undefined) {
-        filter.verified = verified === "true"; // convert query string to boolean
-    }
-
-    if (rating) {
-        filter.rating = { $gte: Number(rating) }; // greater or equal to minRating
-    }
-
-    // Fetch artisans with populated user details
-    const artisans = await artisanModel.find(filter)
-        .populate("userId", "name email profileImage phone address")
-        .populate("Product"); // if you have a Product model
-
-    res.json({ count: artisans.length, artisans });
+    res.json(artisan);
+  } catch (error) {
+    console.error('Error fetching artisan:', error);
+    res.status(500).json({ message: "Error fetching artisan", error: error.message });
+  }
 }));
+
 //get articles by id
-artisanapp.get("/artisans/:id", expressAsyncHandler(async (req, res) => {
+artisanapp.get("/artisan/:id", expressAsyncHandler(async (req, res) => {
     const artisan = await artisanModel.findById(req.params.id)
         .populate("userId", "name email profileImage phone address")
         .populate("products"); // if you have a Product model

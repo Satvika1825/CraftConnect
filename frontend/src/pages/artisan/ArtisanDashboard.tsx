@@ -6,16 +6,45 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/lib/store';
 import { useUser } from '@clerk/clerk-react';
 import { Package, ShoppingBag, TrendingUp, Plus } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import axios from 'axios';
 
 export default function ArtisanDashboard() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { products } = useStore();
-  
+  const [artisanId,setArtisanId]=useState('');
   const myProducts = products.filter((p) => p.artisanId === user?.id);
   const approvedProducts = myProducts.filter((p) => p.approved);
   const pendingProducts = myProducts.filter((p) => !p.approved);
+ 
+  useEffect(() => {
+  const fetchArtisanId = async () => {
+    try {
+      // Get user by clerkId
+      const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+      if (userResponse.data) {
+        // Use the new endpoint to get artisan by userId
+        const artisanResponse = await axios.get(`http://localhost:3000/artisan-api/artisans`, {
+          params: { userId: userResponse.data._id }
+        });
+        if (artisanResponse.data) {
+          setArtisanId(artisanResponse.data._id);
+          console.log('Artisan ID set:', artisanResponse.data._id); // Debug log
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching artisan ID:', error);
+    }
+  };
 
+  if (user) {
+    fetchArtisanId();
+  }
+}, [user]);
+
+  // Modify the navigation to pass artisanId
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -55,7 +84,19 @@ export default function ArtisanDashboard() {
         <Card className="p-6 mb-8">
           <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-4">
-            <Button onClick={() => navigate('/artisan/add-product')} className="gap-2">
+           <Button 
+              onClick={() => {
+                if (artisanId) {
+                  console.log('Navigating with artisanId:', artisanId);
+                  navigate('/artisan/add-product', { 
+                    state: { artisanId } 
+                  });
+                } else {
+                  console.error('No artisan ID available');
+                }
+              }} 
+              className="gap-2"
+            >
               <Plus className="h-4 w-4" />
               Add New Product
             </Button>

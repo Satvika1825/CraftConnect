@@ -3,7 +3,13 @@ const expressAsyncHandler = require('express-async-handler');
 const artisanModel = require('../Models/ArtisanModel');
 const productModel = require('../Models/ProductModel');
 const productapp = exp.Router();
+const cors = require('cors');
 
+productapp.use(cors(
+    { origin: 'http://localhost:8080', // allow requests from any origin
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'], // allow these HTTP methods
+    credentials: true } // allow credentials (cookies, authorization headers, etc.)
+));
 // POST /products → create product
 productapp.post(
   '/products',
@@ -41,7 +47,7 @@ productapp.post(
     });
   })
 );
-//get products with filters and populated artisan details
+//get products 
 productapp.get(
   '/products',
   expressAsyncHandler(async (req, res) => {

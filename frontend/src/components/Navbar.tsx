@@ -3,12 +3,39 @@ import { ShoppingCart, Heart, User, LogOut, Home, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import { UserButton, useUser } from '@clerk/clerk-react';
+import { useEffect,useState } from 'react';
+import axios from 'axios';
 
 export const Navbar = () => {
   const { userRole, cart } = useStore();
   const { user } = useUser();
   const navigate = useNavigate();
+  const [artisanId,setArtisanId]=useState('');
 
+    useEffect(() => {
+  const fetchArtisanId = async () => {
+    try {
+      // Get user by clerkId
+      const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+      if (userResponse.data) {
+        // Use the new endpoint to get artisan by userId
+        const artisanResponse = await axios.get(`http://localhost:3000/artisan-api/artisans`, {
+          params: { userId: userResponse.data._id }
+        });
+        if (artisanResponse.data) {
+          setArtisanId(artisanResponse.data._id);
+          console.log('Artisan ID set:', artisanResponse.data._id); // Debug log
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching artisan ID:', error);
+    }
+  };
+
+  if (user) {
+    fetchArtisanId();
+  }
+}, [user]);
   const handleLogout = () => {
     useStore.getState().setUserRole(null);
     useStore.getState().clearCart();
@@ -66,7 +93,10 @@ export const Navbar = () => {
                 My Products
               </Button>
             </Link>
-            <Link to="/artisan/add-product">
+            <Link 
+              to="/artisan/add-product" 
+              state={{ artisanId: artisanId }}
+            >
               <Button variant="ghost">Add Product</Button>
             </Link>
             <Link to="/artisan/orders">

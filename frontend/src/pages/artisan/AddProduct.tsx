@@ -11,6 +11,8 @@ import { Card } from '@/components/ui/card';
 import { useStore } from '@/lib/store';
 import { useUser } from '@clerk/clerk-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+import {useLocation} from 'react-router-dom';
 
 const categories = ['Pottery', 'Weaving', 'Embroidery', 'Woodwork', 'Jewelry', 'Painting'];
 
@@ -18,7 +20,9 @@ export default function AddProduct() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { addProduct } = useStore();
-  
+  const location=useLocation();
+  const {artisanId}=location.state || {};
+  console.log('Received artisanId:', artisanId);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,8 +32,13 @@ export default function AddProduct() {
     image: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+     if (!artisanId) {
+      toast.error('Artisan ID is missing');
+      return;
+    }
     
     if (!formData.name || !formData.price || !formData.category) {
       toast.error('Please fill in all required fields');
@@ -44,14 +53,31 @@ export default function AddProduct() {
       category: formData.category,
       stock: parseInt(formData.stock) || 0,
       image: formData.image || 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400',
-      artisanId: user?.id || '',
+      artisanId: artisanId,
       artisanName: user?.fullName || 'Unknown Artisan',
       approved: false,
     };
 
-    addProduct(product);
-    toast.success('Product added! Waiting for admin approval.');
-    navigate('/artisan/products');
+     try {
+      const response = await axios.post('http://localhost:3000/product-api/products', {
+        artisanId: artisanId,
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        price: product.price,
+        stock: product.stock,
+        image: product.image,
+        approved: false
+      });
+       if (response.data) {
+        addProduct(product);
+        toast.success('Product added! Waiting for admin approval.');
+        navigate('/artisan/products');
+      }
+       } catch (error: any) {
+      console.error('Error adding product to backend:', error);
+      toast.error(error.response?.data?.message || 'Failed to add product');
+    }
   };
 
   return (
