@@ -3,21 +3,53 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ProductCard } from '@/components/ProductCard';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useStore } from '@/lib/store';
 import { Search } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 const categories = ['All', 'Pottery', 'Weaving', 'Embroidery', 'Woodwork', 'Jewelry', 'Painting'];
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  artisanId: string;
+  artisanName: string;
+  approved: boolean;
+}
 
 export default function Products() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { products } = useStore();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
   const [sortBy, setSortBy] = useState('name');
+
+  // Fetch products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/product-api/products', {
+          params: { approved: true }
+        });
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast.error('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const category = searchParams.get('category');
@@ -27,7 +59,6 @@ export default function Products() {
   }, [searchParams]);
 
   const filteredProducts = products
-    .filter((p) => p.approved)
     .filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -45,6 +76,18 @@ export default function Products() {
           return a.name.localeCompare(b.name);
       }
     });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -99,9 +142,13 @@ export default function Products() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard
-                key={product.id}
-                product={product}
-                onViewDetails={() => navigate(`/customer/products/${product.id}`)}
+                key={product._id}
+                product={{
+                  ...product,
+                  id: product._id,
+                  stock: 0 // Add a default value for stock
+                }}
+                onViewDetails={() => navigate(`/customer/products/${product._id}`)}
               />
             ))}
           </div>
