@@ -32,7 +32,7 @@ export default function LikedProducts() {
             {likedProductsList.map((product) => (
               <ProductCard
                 key={product.id}
-                product={product}
+                product={{ ...product, _id: product.id }}
                 onViewDetails={() => navigate(`/customer/products/${product.id}`)}
               />
             ))}

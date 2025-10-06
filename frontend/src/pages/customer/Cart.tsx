@@ -1,20 +1,110 @@
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useStore } from '@/lib/store';
-import { Trash2, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
+import * as icons from 'lucide-react'
+
+interface CartItem {
+  _id: string;
+  userId: string;
+  productId: {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    image: string;
+  };
+  quantity: number;
+}
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useStore();
+  const { user } = useUser();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  // Fetch cart items
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      if (!user) return;
 
-  const handleCheckout = () => {
-    toast.success('Order placed successfully!');
-    clearCart();
+      try {
+        const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+        if (!userResponse.data?._id) return;
+
+        const cartResponse = await axios.get(`http://localhost:3000/cart-api/cart/${userResponse.data._id}`);
+        setCartItems(cartResponse.data);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+        toast.error('Failed to load cart items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartItems();
+  }, [user]);
+
+  const total = cartItems.reduce((sum, item) => sum + item.productId.price * item.quantity, 0);
+
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+    try {
+      await axios.put(`http://localhost:3000/cart-api/cart/${itemId}`, {
+        quantity: newQuantity
+      });
+
+      setCartItems(current =>
+        current.map(item =>
+          item._id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast.error('Failed to update quantity');
+    }
   };
+
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      await axios.delete(`http://localhost:3000/cart-api/cart/${itemId}`);
+      setCartItems(current => current.filter(item => item._id !== itemId));
+      toast.success('Item removed from cart');
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast.error('Failed to remove item');
+    }
+  };
+
+  const handleCheckout = async () => {
+    try {
+      // Clear cart items from database
+      await Promise.all(cartItems.map(item => 
+        axios.delete(`http://localhost:3000/cart-api/cart/${item._id}`)
+      ));
+      
+      setCartItems([]);
+      toast.success('Order placed successfully!');
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      toast.error('Failed to process checkout');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -23,49 +113,49 @@ export default function Cart() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <h1 className="text-4xl font-serif font-bold mb-8">Shopping Cart</h1>
 
-        {cart.length === 0 ? (
+        {cartItems.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted-foreground text-lg">Your cart is empty</p>
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
-              {cart.map((item) => (
-                <Card key={item.product.id} className="p-4">
+              {cartItems.map((item) => (
+                <Card key={item._id} className="p-4">
                   <div className="flex gap-4">
                     <img
-                      src={item.product.image}
-                      alt={item.product.name}
+                      src={item.productId.image}
+                      alt={item.productId.name}
                       className="w-24 h-24 object-cover rounded"
                     />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{item.product.name}</h3>
-                      <p className="text-muted-foreground text-sm">{item.product.category}</p>
-                      <p className="text-primary font-bold mt-2">₹{item.product.price}</p>
+                      <h3 className="font-semibold text-lg">{item.productId.name}</h3>
+                      <p className="text-muted-foreground text-sm">{item.productId.category}</p>
+                      <p className="text-primary font-bold mt-2">₹{item.productId.price}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => removeFromCart(item.product.id)}
+                        onClick={() => handleRemoveItem(item._id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <icons.Trash2 className="h-4 w-4" />
                       </Button>
                       <div className="flex items-center gap-2 border rounded">
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => handleUpdateQuantity(item._id, Math.max(1, item.quantity - 1))}
                         >
-                          <Minus className="h-4 w-4" />
+                          <icons.Minus className="h-4 w-4" />
                         </Button>
                         <span className="w-8 text-center">{item.quantity}</span>
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item._id, item.quantity + 1)}
                         >
-                          <Plus className="h-4 w-4" />
+                          <icons.Plus className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>

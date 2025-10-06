@@ -3,7 +3,6 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/lib/store';
 import heroBanner from '@/assets/hero-banner.jpg';
 import pottery from '@/assets/pottery.jpg';
 import weaving from '@/assets/weaving.jpg';
@@ -11,6 +10,9 @@ import embroidery from '@/assets/embroidery.jpg';
 import woodwork from '@/assets/woodwork.jpg';
 import jewelry from '@/assets/jewelry.jpg';
 import painting from '@/assets/painting.jpg';
+import { useState,useEffect } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const crafts = [
   { name: 'Pottery', image: pottery, category: 'Pottery' },
@@ -21,10 +23,44 @@ const crafts = [
   { name: 'Painting', image: painting, category: 'Painting' },
 ];
 
+interface Product {
+  _id: string;
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  artisanId: string;
+  artisanName: string;
+  approved: boolean;
+  stock: number;
+}
+
 export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const { products } = useStore();
-  const featuredProducts = products.filter((p) => p.approved).slice(0, 6);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/product-api/products', {
+          params: { approved: true }
+        });
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast.error('Failed to load featured products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const featuredProducts = products.slice(0, 6);
 
   const handleCraftClick = (category: string) => {
     navigate(`/customer/products?category=${category}`);
@@ -110,7 +146,7 @@ export default function CustomerDashboard() {
       </section>
 
       {/* Featured Products */}
-      {featuredProducts.length > 0 && (
+      {!loading && featuredProducts.length > 0 && (
         <section className="py-20 bg-card">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
@@ -135,13 +171,13 @@ export default function CustomerDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredProducts.map((product, index) => (
                 <div 
-                  key={product.id}
+                  key={product._id}
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <ProductCard
                     product={product}
-                    onViewDetails={() => navigate(`/customer/products/${product.id}`)}
+                    onViewDetails={() => navigate(`/customer/products/${product._id}`)}
                   />
                 </div>
               ))}
@@ -149,7 +185,11 @@ export default function CustomerDashboard() {
           </div>
         </section>
       )}
-
+ {loading && (
+    <div className="py-20 flex justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+    </div>
+  )}
       <Footer />
     </div>
   );

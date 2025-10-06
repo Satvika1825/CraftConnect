@@ -3,48 +3,80 @@ import { Footer } from '@/components/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '@/lib/store';
 import { useUser } from '@clerk/clerk-react';
 import { Package, ShoppingBag, TrendingUp, Plus } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  artisanId: string;
+  approved: boolean;
+}
 
 export default function ArtisanDashboard() {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { products } = useStore();
-  const [artisanId,setArtisanId]=useState('');
-  const myProducts = products.filter((p) => p.artisanId === user?.id);
-  const approvedProducts = myProducts.filter((p) => p.approved);
-  const pendingProducts = myProducts.filter((p) => !p.approved);
- 
+  const [artisanId, setArtisanId] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-  const fetchArtisanId = async () => {
-    try {
-      // Get user by clerkId
-      const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
-      if (userResponse.data) {
-        // Use the new endpoint to get artisan by userId
-        const artisanResponse = await axios.get(`http://localhost:3000/artisan-api/artisans`, {
-          params: { userId: userResponse.data._id }
-        });
-        if (artisanResponse.data) {
-          setArtisanId(artisanResponse.data._id);
-          console.log('Artisan ID set:', artisanResponse.data._id); // Debug log
+    const fetchData = async () => {
+      if (!user) return;
+
+      try {
+        // Get user by clerkId
+        const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+        if (userResponse.data) {
+          // Get artisan profile
+          const artisanResponse = await axios.get(`http://localhost:3000/artisan-api/artisans`, {
+            params: { userId: userResponse.data._id }
+          });
+          
+          if (artisanResponse.data) {
+            const artisanId = artisanResponse.data._id;
+            setArtisanId(artisanId);
+
+            // Fetch products for this artisan
+            const productsResponse = await axios.get(`http://localhost:3000/product-api/products`, {
+              params: { artisanId }
+            });
+            setProducts(productsResponse.data);
+          }
         }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching artisan ID:', error);
-    }
-  };
+    };
 
-  if (user) {
-    fetchArtisanId();
+    fetchData();
+  }, [user]);
+
+  const approvedProducts = products.filter((p) => p.approved);
+  const pendingProducts = products.filter((p) => !p.approved);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
-}, [user]);
 
-  // Modify the navigation to pass artisanId
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -60,7 +92,7 @@ export default function ArtisanDashboard() {
               <h3 className="text-sm font-medium text-muted-foreground">Total Products</h3>
               <Package className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-3xl font-bold">{myProducts.length}</p>
+            <p className="text-3xl font-bold">{products.length}</p>
           </Card>
 
           <Card className="p-6">
@@ -84,7 +116,7 @@ export default function ArtisanDashboard() {
         <Card className="p-6 mb-8">
           <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-4">
-           <Button 
+            <Button 
               onClick={() => {
                 if (artisanId) {
                   console.log('Navigating with artisanId:', artisanId);
@@ -92,7 +124,7 @@ export default function ArtisanDashboard() {
                     state: { artisanId } 
                   });
                 } else {
-                  console.error('No artisan ID available');
+                  toast.error('Unable to add product. Please try again later.');
                 }
               }} 
               className="gap-2"
@@ -112,12 +144,12 @@ export default function ArtisanDashboard() {
         {/* Recent Products */}
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-4">Recent Products</h2>
-          {myProducts.length === 0 ? (
+          {products.length === 0 ? (
             <p className="text-muted-foreground">You haven't added any products yet.</p>
           ) : (
             <div className="space-y-4">
-              {myProducts.slice(0, 5).map((product) => (
-                <div key={product.id} className="flex items-center gap-4 p-4 border rounded">
+              {products.slice(0, 5).map((product) => (
+                <div key={product._id} className="flex items-center gap-4 p-4 border rounded">
                   <img
                     src={product.image}
                     alt={product.name}

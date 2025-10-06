@@ -21,6 +21,7 @@ interface Product {
   artisanId: string;
   artisanName: string;
   approved: boolean;
+  stock: number;
 }
 
 export default function Products() {
@@ -143,11 +144,7 @@ export default function Products() {
             {filteredProducts.map((product) => (
               <ProductCard
                 key={product._id}
-                product={{
-                  ...product,
-                  id: product._id,
-                  stock: 0 // Add a default value for stock
-                }}
+                product={product}
                 onViewDetails={() => navigate(`/customer/products/${product._id}`)}
               />
             ))}

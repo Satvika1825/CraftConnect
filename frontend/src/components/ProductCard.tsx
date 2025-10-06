@@ -1,28 +1,71 @@
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Product } from '@/types';
-import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { Toast } from 'react-hot-toast';
+import { useUser } from '@clerk/clerk-react';
+import { useState } from 'react';
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  artisanId: string;
+  artisanName: string;
+}
 
 interface ProductCardProps {
   product: Product;
   onViewDetails?: () => void;
 }
-
 export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
-  const { addToCart, toggleLike, likedProducts } = useStore();
-  const isLiked = likedProducts.includes(product.id);
-
-  const handleAddToCart = () => {
-    addToCart(product);
-    toast.success('Added to cart!');
-  };
+  const {user}=useUser();
+  const [isLiked, setIsLiked] = useState(false);
 
   const handleToggleLike = () => {
-    toggleLike(product.id);
-    toast.success(isLiked ? 'Removed from liked' : 'Added to liked!');
+    setIsLiked(!isLiked);
   };
+
+const handleAddToCart = async () => {
+  if (!user) {
+    toast.error('Please login to add items to cart');
+    return;
+  }
+
+  try {
+    // Get user's MongoDB ID
+    const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+    console.log('User response:', userResponse.data); // Debug log
+
+    if (!userResponse.data || !userResponse.data._id) {
+      toast.error('User not found');
+      return;
+    }
+
+    // Add item to cart
+    const cartResponse = await axios.post('http://localhost:3000/cart-api/cart/add', {
+      userId: userResponse.data._id,
+      productId: product._id,
+      quantity: 1
+    });
+
+    console.log('Cart response:', cartResponse.data); // Debug log
+
+    if (cartResponse.data) {
+      toast.success('Added to cart!');
+    } else {
+      throw new Error('Failed to add to cart');
+    }
+  } catch (error: any) {
+    console.error('Error adding to cart:', error);
+    toast.error(error.response?.data?.message || 'Failed to add item to cart');
+  }
+};
+ 
 
   return (
     <Card className="group overflow-hidden border-2 hover:border-primary transition-all duration-500 hover-lift relative">
