@@ -1,112 +1,131 @@
-const exp=require('express');
-const cartapp=exp.Router();
-const cartModel=require('../Models/CartModel');
-const productModel=require('../Models/ProductModel');
-const expressAsyncHandler = require("express-async-handler");
-// ---------------- POST /cart → Add item to cart ----------------
-cartapp.post(
-  "/cart",
-  expressAsyncHandler(async (req, res) => {
+const express = require('express');
+const mongoose = require('mongoose');
+const cartapp = express.Router();
+const expressAsyncHandler = require('express-async-handler');
+const CartModel = require('../Models/CartModel');
+const cors = require("cors");
+
+cartapp.use(cors(
+    { origin: 'http://localhost:8080', // allow requests from any origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE','PUT'], // allow these HTTP methods
+    credentials: true } // allow credentials (cookies, authorization headers, etc.)
+));
+// Add item to cart
+cartapp.post('/cart/add', expressAsyncHandler(async (req, res) => {
+  try {
     const { userId, productId, quantity } = req.body;
+    console.log('Received cart add request:', { userId, productId, quantity });
 
-    // 1. Validate input
-    if (!userId || !productId) {
-      return res.status(400).json({ message: "userId and productId are required" });
-    }
-
-    // 2. Check if product exists
-    const product = await productModel.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    // 3. Check stock
-    if (product.stock < quantity) {
-      return res.status(400).json({ message: "Not enough stock available" });
-    }
-
-    // 4. Check if user already has a cart
-    let cart = await cartModel.findOne({ userId });
-
-    if (!cart) {
-      // Create new cart
-      cart = new cartModel({
-        userId,
-        items: [{ productId, quantity }],
+    if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(productId)) {
+      return res.status(400).json({ 
+        message: 'Invalid userId or productId format',
+        received: { userId, productId }
       });
+    }
+
+    let cartItem = await CartModel.findOne({ 
+      userId: userId,
+      productId: productId 
+    });
+
+    if (cartItem) {
+      cartItem.quantity += parseInt(quantity);
+      await cartItem.save();
     } else {
-      // Check if product already in cart
-      const existingItem = cart.items.find(
-        (item) => item.productId.toString() === productId
-      );
+      cartItem = new CartModel({
+        userId,
+        productId,
+        quantity: parseInt(quantity)
+      });
+      await cartItem.save();
 
-      if (existingItem) {
-        existingItem.quantity += quantity; // increase quantity
-      } else {
-        cart.items.push({ productId, quantity }); // add new product
-      }
     }
 
-    // 5. Save cart
-    await cart.save();
+    res.status(201).json({
+      message: 'Item added to cart successfully',
+      cartItem
+    });
 
-    res.status(201).json({ message: "Item added to cart", cart });
-  })
-);
-// ---------------- GET /cart → View current user’s cart ----------------
-cartapp.get('/cart/:userId', async (req, res) => {
-    try {
-        const cart = await cartModel.findOne({ userId: req.params.userId })
-                                    .populate('items.productId', 'name price'); // optional: populate product info
-        if (!cart) return res.status(404).json({ message: 'Cart not found' });
-        res.status(200).json(cart);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to add item to cart',
+      error: error.message
+    });
+  }
+}));
+
+// Get user's cart
+cartapp.get('/cart/:userId', expressAsyncHandler(async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ 
+        message: 'Invalid user ID format' 
+      });
     }
-});
+
+    const cartItems = await CartModel.find({ userId })
+      .populate({
+        path: 'productId',
+        select: 'name description price category image'
+      });
+
+   
+    res.json(cartItems);
+
+  } catch (error) {
+   
+    res.status(500).json({ 
+      message: 'Failed to fetch cart items',
+      error: error.message 
+    });
+  }
+}));
+
 // ---------------- PUT /cart/:itemId → Update quantity ----------------
-cartapp.put('/cart/:userId/:itemId', async (req, res) => {
-    try {
-        const { quantity } = req.body;
-        const cart = await cartModel.findOne({ userId: req.params.userId });
-
-        if (!cart) return res.status(404).json({ message: 'Cart not found' });
-
-        const itemIndex = cart.items.findIndex(item => item._id.toString() === req.params.itemId);
-
-        if (itemIndex === -1) return res.status(404).json({ message: 'Item not found in cart' });
-
-        if (quantity <= 0) {
-            // remove item if quantity is 0 or less
-            cart.items.splice(itemIndex, 1);
-        } else {
-            cart.items[itemIndex].quantity = quantity;
-        }
-
-        cart.updatedAt = Date.now();
-        await cart.save();
-
-        res.status(200).json(cart);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+cartapp.put('/cart/:itemId', expressAsyncHandler(async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    
+    if (!mongoose.isValidObjectId(req.params.itemId)) {
+      return res.status(400).json({ message: 'Invalid item ID format' });
     }
-});
+
+    const updatedItem = await CartModel.findByIdAndUpdate(
+      req.params.itemId,
+      { quantity: parseInt(quantity) },
+      { new: true }
+    ).populate('productId');
+
+    if (!updatedItem) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    res.json(updatedItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update cart item' });
+  }
+}));
 
 // ---------------- DELETE /cart/:itemId → Remove from cart ----------------
-cartapp.delete('/cart/:userId/:itemId', async (req, res) => {
-    try {
-        const cart = await cartModel.findOne({ userId: req.params.userId });
-
-        if (!cart) return res.status(404).json({ message: 'Cart not found' });
-
-        cart.items = cart.items.filter(item => item._id.toString() !== req.params.itemId);
-
-        cart.updatedAt = Date.now();
-        await cart.save();
-
-        res.status(200).json(cart);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+cartapp.delete('/cart/:itemId', expressAsyncHandler(async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.itemId)) {
+      return res.status(400).json({ message: 'Invalid item ID format' });
     }
-});
-module.exports=cartapp;
+
+    const deletedItem = await CartModel.findByIdAndDelete(req.params.itemId);
+    
+    if (!deletedItem) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    res.json({ message: 'Item removed from cart' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to remove cart item' });
+  }
+}));
+
+module.exports = cartapp;
