@@ -14,7 +14,7 @@ cartapp.use(cors(
 cartapp.post('/cart/add', expressAsyncHandler(async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
-    console.log('Received cart add request:', { userId, productId, quantity });
+    
 
     if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(productId)) {
       return res.status(400).json({ 

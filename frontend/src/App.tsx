@@ -19,6 +19,7 @@ import ManageUsers from './pages/admin/ManageUsers';
 import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import NotFound from './pages/NotFound';
+import OrdersCustomer from './pages/customer/OrdersCustomer';
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/customer/products" element={<Products />} />
             <Route path="/customer/liked" element={<LikedProducts />} />
             <Route path="/customer/cart" element={<Cart />} />
+            <Route path="/customer/orders" element={<OrdersCustomer />} />
             
             {/* Artisan Routes */}
             <Route path="/artisan" element={<ArtisanDashboard />} />

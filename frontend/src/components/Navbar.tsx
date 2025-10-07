@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, User, LogOut, Home, Package } from 'lucide-react';
+import { ShoppingCart, Heart, User, LogOut, Home, Package, ShoppingBasket, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 import { UserButton, useUser } from '@clerk/clerk-react';
@@ -74,6 +74,12 @@ export const Navbar = () => {
                     {cart.length}
                   </span>
                 )}
+              </Button>
+            </Link>
+            <Link to="/customer/orders">
+              <Button variant="ghost" className="gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                Orders
               </Button>
             </Link>
           </>
