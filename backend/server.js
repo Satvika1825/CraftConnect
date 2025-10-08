@@ -9,6 +9,7 @@ const productapp = require('./APIs/ProductApi');
 const cartapp = require('./APIs/CartApi');
 const orderapp = require('./APIs/OrdersApi');   
 const reviewapp = require('./APIs/reviewApi');
+const likeapp = require('./APIs/LikeApi');
 
 const port=process.env.PORT ;
 
@@ -34,3 +35,4 @@ app.use('/product-api',productapp)
 app.use('/cart-api',cartapp)
 app.use('/orders-api',orderapp)
 app.use('/review-api',reviewapp)
+app.use('/like-api',likeapp)

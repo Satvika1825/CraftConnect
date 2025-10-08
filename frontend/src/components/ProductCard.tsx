@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { Toast } from 'react-hot-toast';
 import { useUser } from '@clerk/clerk-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Product {
   _id: string;
@@ -26,8 +26,42 @@ export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
   const {user}=useUser();
   const [isLiked, setIsLiked] = useState(false);
 
-  const handleToggleLike = () => {
-    setIsLiked(!isLiked);
+ useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!user) return;
+
+      try {
+        const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+        const likesResponse = await axios.get(`http://localhost:3000/like-api/likes/${userResponse.data._id}`);
+        const liked = likesResponse.data.some((like: any) => like.productId._id === product._id);
+        setIsLiked(liked);
+      } catch (error) {
+        console.error('Error checking like status:', error);
+      }
+    };
+     checkLikeStatus();
+  }, [user, product._id]);
+
+  
+   const handleToggleLike = async () => {
+    if (!user) {
+      toast.error('Please login to like products');
+      return;
+    }
+
+    try {
+      const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+      const response = await axios.post('http://localhost:3000/like-api/likes/toggle', {
+        userId: userResponse.data._id,
+        productId: product._id
+      });
+
+      setIsLiked(response.data.liked);
+      toast.success(response.data.liked ? 'Added to favorites' : 'Removed from favorites');
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update favorite status');
+    }
   };
 
 const handleAddToCart = async () => {
