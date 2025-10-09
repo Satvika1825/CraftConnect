@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -21,8 +22,8 @@ interface CartItem {
   };
   quantity: number;
 }
-
 export default function Cart() {
+  const navigate = useNavigate();
   const { user } = useUser();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,20 +80,42 @@ export default function Cart() {
     }
   };
 
-  const handleCheckout = async () => {
-    try {
-      // Clear cart items from database
+const handleCheckout = async () => {
+  if (!user) {
+    toast.error('Please login to checkout');
+    return;
+  }
+
+  try {
+    // Get user's MongoDB ID
+    const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+    if (!userResponse.data?._id) {
+      toast.error('User not found');
+      return;
+    }
+
+    // Create order
+    const orderResponse = await axios.post('http://localhost:3000/order-api/orders/create', {
+      userId: userResponse.data._id,
+      items: cartItems,
+      total
+    });
+
+    if (orderResponse.data) {
+      // Clear cart after successful order
       await Promise.all(cartItems.map(item => 
         axios.delete(`http://localhost:3000/cart-api/cart/${item._id}`)
       ));
       
       setCartItems([]);
       toast.success('Order placed successfully!');
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      toast.error('Failed to process checkout');
+      navigate('/customer/orders'); // Navigate to orders page
     }
-  };
+  } catch (error) {
+    console.error('Error during checkout:', error);
+    toast.error('Failed to process checkout');
+  }
+};
 
   if (loading) {
     return (
