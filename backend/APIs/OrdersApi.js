@@ -90,4 +90,40 @@ orderapp.put('/orders/:orderId/status', expressAsyncHandler(async (req, res) => 
   }
 }));
 
+// Get orders for specific artisan
+orderapp.get('/orders/artisan/:artisanId', expressAsyncHandler(async (req, res) => {
+  try {
+    const { artisanId } = req.params;
+    console.log('Fetching orders for artisan:', artisanId);
+
+    if (!mongoose.Types.ObjectId.isValid(artisanId)) {
+      return res.status(400).json({ message: 'Invalid artisan ID format' });
+    }
+
+    // Use find and populate instead of aggregation for simplicity
+    const orders = await OrderModel.find()
+      .populate({
+        path: 'items.productId',
+        match: { artisanId: artisanId }
+      })
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 });
+
+    // Filter out orders that don't have any products from this artisan
+    const filteredOrders = orders.filter(order => 
+      order.items.some(item => item.productId !== null)
+    );
+
+    console.log(`Found ${filteredOrders.length} orders for artisan ${artisanId}`);
+    res.json(filteredOrders);
+
+  } catch (error) {
+    console.error('Error fetching artisan orders:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch artisan orders',
+      error: error.message 
+    });
+  }
+}));
+
 module.exports = orderapp;
