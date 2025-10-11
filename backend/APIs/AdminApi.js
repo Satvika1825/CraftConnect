@@ -5,11 +5,31 @@ const expressAsyncHandler = require("express-async-handler");
 const userModel = require("../Models/UserModel");
 const productModel = require("../Models/ProductModel");
 const orderModel = require("../Models/OrderModel");
+const ActivityModel = require("../Models/AdminModel");
+const cors = require('cors');
 
 // ---------------- ROOT ----------------
 adminapp.get("/", (req, res) => {
   res.send({ message: "Admin API" });
 });
+
+adminapp.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  methods: ['GET', 'POST'],
+  credentials: true
+}))
+adminapp.get('/activities', expressAsyncHandler(async (req, res) => {
+  try {
+    const activities = await ActivityModel
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(10);
+    res.json(activities);
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+    res.status(500).json({ message: 'Failed to fetch activities' });
+  }
+}));
 
 // ---------------- GET /admin/users → Manage all users ----------------
 adminapp.get("/users", expressAsyncHandler(async (req, res) => {
