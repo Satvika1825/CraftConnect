@@ -1,14 +1,15 @@
-const exp=require('express');
-const userapp=exp.Router();
-const expressAsyncHandler=require('express-async-handler');
-const userModel=require('../Models/UserModel');
+const express = require('express');
+const userapp = express.Router();
+const expressAsyncHandler = require('express-async-handler');
+const UserModel = require('../Models/UserModel');
 const cors = require("cors");
 
-userapp.use(cors(
-    { origin: 'http://localhost:8080', // allow requests from any origin
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'], // allow these HTTP methods
-    credentials: true } // allow credentials (cookies, authorization headers, etc.)
-));
+userapp.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
 //API
 userapp.post('/user', expressAsyncHandler(async (req, res) => {
     const { clerkId, email, role, name } = req.body;
@@ -17,7 +18,7 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
         return res.status(400).send({ message: "Missing required fields" });
     }
 
-    const userInDb = await userModel.findOne({ clerkId });
+    const userInDb = await UserModel.findOne({ clerkId });
 
     if (userInDb) {
         if (userInDb.role === role) {
@@ -27,7 +28,7 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
         }
     }
 
-    const newUser = new userModel({ clerkId, email, role, name });
+    const newUser = new UserModel({ clerkId, email, role, name });
     const savedUser = await newUser.save();
 
     res.status(201).send({ message: "User created", user: savedUser });
@@ -36,7 +37,7 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
 // ---------------- GET /users/:id → Get profile details ----------------
 userapp.get('/user/:clerkId', expressAsyncHandler(async (req, res) => {
     try {
-        const user = await userModel.findOne({clerkId: req.params.clerkId });
+        const user = await UserModel.findOne({clerkId: req.params.clerkId });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -49,7 +50,7 @@ userapp.get('/user/:clerkId', expressAsyncHandler(async (req, res) => {
 // ---------------- PUT /users/:id → Update profile info ----------------
 userapp.put('/users/:id', expressAsyncHandler(async (req, res) => {
     try {
-        const updatedUser = await userModel.findByIdAndUpdate(
+        const updatedUser = await UserModel.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true, runValidators: true } // returns updated doc + validates schema
@@ -68,7 +69,7 @@ userapp.put('/users/:id', expressAsyncHandler(async (req, res) => {
 // ---------------- DELETE /users/:id → Delete account ----------------
 userapp.delete('/users/:id', expressAsyncHandler(async (req, res) => {
     try {
-        const deletedUser = await userModel.findByIdAndDelete(req.params.id);
+        const deletedUser = await UserModel.findByIdAndDelete(req.params.id);
         if (!deletedUser) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -76,6 +77,19 @@ userapp.delete('/users/:id', expressAsyncHandler(async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+}));
+
+// Get all users
+userapp.get('/users', expressAsyncHandler(async (req, res) => {
+  try {
+    const users = await UserModel.find()
+      .select('-password -__v')
+      .sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
 }));
 
 module.exports=userapp;
