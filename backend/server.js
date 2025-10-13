@@ -12,7 +12,17 @@ const reviewapp = require('./APIs/reviewApi');
 const likeapp = require('./APIs/LikeApi');
 
 const port=process.env.PORT ;
-
+const cors = require('cors');
+app.use(cors({
+  origin: [
+    'http://localhost:8080',
+    'http://localhost:5173',
+    'https://craft-connect-blond.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 const mongoose=require('mongoose');
 const { activityapp } = require('./APIs/ActivityApi');
 
