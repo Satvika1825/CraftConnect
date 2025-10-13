@@ -5,11 +5,23 @@ const UserModel = require('../Models/UserModel');
 const cors = require("cors");
 
 userapp.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  origin: ['http://localhost:8080', 'http://localhost:5173','https://craft-connect-blond.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-
+// Helper function to log activities
+const logActivity = async (type, userId, details, message) => {
+  try {
+    await ActivityModel.create({
+      type,
+      userId,
+      details,
+      message
+    });
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+};
 //API
 userapp.post('/user', expressAsyncHandler(async (req, res) => {
     const { clerkId, email, role, name } = req.body;
@@ -31,6 +43,17 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
     const newUser = new UserModel({ clerkId, email, role, name });
     const savedUser = await newUser.save();
 
+        await logActivity(
+      'user_registered',
+      savedUser._id,
+      {
+        role: savedUser.role,
+        email: savedUser.email,
+        name: savedUser.name
+      },
+      `New ${savedUser.role} registered: ${savedUser.name}`
+    );
+
     res.status(201).send({ message: "User created", user: savedUser });
 }));
 
@@ -48,17 +71,38 @@ userapp.get('/user/:clerkId', expressAsyncHandler(async (req, res) => {
 }));
 
 // ---------------- PUT /users/:id → Update profile info ----------------
+// Update user profile
 userapp.put('/users/:id', expressAsyncHandler(async (req, res) => {
     try {
+        const oldUser = await UserModel.findById(req.params.id);
+        if (!oldUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         const updatedUser = await UserModel.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true, runValidators: true } // returns updated doc + validates schema
+            { new: true, runValidators: true }
         );
 
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        // Log profile update activity
+        await logActivity(
+          'user_updated',
+          updatedUser._id,
+          {
+            oldData: {
+              name: oldUser.name,
+              email: oldUser.email,
+              role: oldUser.role
+            },
+            newData: {
+              name: updatedUser.name,
+              email: updatedUser.email,
+              role: updatedUser.role
+            }
+          },
+          `User profile updated: ${updatedUser.name}`
+        );
 
         res.status(200).json({ message: "User updated successfully", user: updatedUser });
     } catch (error) {
@@ -69,16 +113,29 @@ userapp.put('/users/:id', expressAsyncHandler(async (req, res) => {
 // ---------------- DELETE /users/:id → Delete account ----------------
 userapp.delete('/users/:id', expressAsyncHandler(async (req, res) => {
     try {
-        const deletedUser = await UserModel.findByIdAndDelete(req.params.id);
+        const deletedUser = await UserModel.findById(req.params.id);
         if (!deletedUser) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        await UserModel.findByIdAndDelete(req.params.id);
+
+        // Log account deletion activity
+        await logActivity(
+          'user_deleted',
+          deletedUser._id,
+          {
+            email: deletedUser.email,
+            role: deletedUser.role
+          },
+          `User account deleted: ${deletedUser.name}`
+        );
+
         res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }));
-
 // Get all users
 userapp.get('/users', expressAsyncHandler(async (req, res) => {
   try {
@@ -91,5 +148,7 @@ userapp.get('/users', expressAsyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch users' });
   }
 }));
+
+
 
 module.exports=userapp;

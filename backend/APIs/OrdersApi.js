@@ -10,7 +10,22 @@ orderapp.use(cors(
     methods: ['GET', 'POST', 'PUT', 'DELETE','PUT'], // allow these HTTP methods
     credentials: true } // allow credentials (cookies, authorization headers, etc.)
 ));
+const ActivityModel = require('../Models/ActivityModel');
 
+// When order is placed
+// Helper function to log activities
+const logActivity = async (type, userId, details, message) => {
+  try {
+    await ActivityModel.create({
+      type,
+      userId,
+      details,
+      message
+    });
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+};
 // Get orders for specific user
 orderapp.get('/orders/user/:userId', expressAsyncHandler(async (req, res) => {
   try {
@@ -48,6 +63,16 @@ orderapp.post('/orders/create', expressAsyncHandler(async (req, res) => {
     const savedOrder = await order.save();
     await savedOrder.populate('items.productId');
 
+    await logActivity(
+      'order_placed',
+      userId,
+      {
+        orderId: savedOrder._id,
+        total: total,
+        items: items
+      },
+      `New order placed worth ₹${total}`
+    );
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error('Order creation error:', error);

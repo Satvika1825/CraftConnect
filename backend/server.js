@@ -14,6 +14,7 @@ const likeapp = require('./APIs/LikeApi');
 const port=process.env.PORT ;
 
 const mongoose=require('mongoose');
+const { activityapp } = require('./APIs/ActivityApi');
 
 //connect to db
 mongoose.connect(process.env.DBURL)
@@ -36,3 +37,4 @@ app.use('/cart-api',cartapp)
 app.use('/order-api',orderapp)
 app.use('/review-api',reviewapp)
 app.use('/like-api',likeapp)
+app.use('/activity-api',activityapp)
