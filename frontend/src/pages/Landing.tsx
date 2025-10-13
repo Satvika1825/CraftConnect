@@ -43,7 +43,7 @@ export default function Landing() {
     const checkUserRole = async () => {
       if (isSignedIn && user) {
         try {
-          const response = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+          const response = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
           if (response.data.role) {
             setUserRole(response.data.role);
             navigate(`/${response.data.role}`);
@@ -99,7 +99,7 @@ export default function Landing() {
 
   const handleRoleSelection = async (role: 'customer' | 'artisan' | 'admin') => {
     try {
-     const response= await axios.post('http://localhost:3000/user-api/user', {
+     const response= await axios.post('https://craftconnect-bbdp.onrender.com/user-api/user', {
       clerkId: user?.id,
       email: user?.emailAddresses?.[0]?.emailAddress || '',
       role,
@@ -136,7 +136,7 @@ export default function Landing() {
       return;
     }
     try {
-      await axios.post('http://localhost:3000/artisan-api/artisan', {
+      await axios.post('https://craftconnect-bbdp.onrender.com/artisan-api/artisan', {
         userId: user.id,
         shopName,
         bio,
