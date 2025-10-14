@@ -44,14 +44,14 @@ export default function Orders() {
 
       try {
         // Get user's MongoDB ID
-        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
         if (!userResponse.data?._id) {
           toast.error('User not found');
           return;
         }
 
         // Get artisan details
-        const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/artisan-api/artisans`, {
+        const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/artisan-api/artisans`, {
           params: { userId: userResponse.data._id }
         });
         
@@ -65,7 +65,7 @@ export default function Orders() {
 
         // Then fetch orders for this artisan
         const ordersResponse = await axios.get(
-          `https://craftconnect-bbdp.onrender.com-api/order-api/orders/artisan/${artisanResponse.data._id}`
+          `https://craftconnect-bbdp.onrender.com/order-api/orders/artisan/${artisanResponse.data._id}`
         );
 
         console.log('Fetched orders:', ordersResponse.data); // Debug log

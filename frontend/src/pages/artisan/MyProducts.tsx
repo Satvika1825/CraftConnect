@@ -31,15 +31,15 @@ export default function MyProducts() {
       
       try {
         // First get the artisan ID using the user's Clerk ID
-        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
         if (userResponse.data) {
-          const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/artisan-api/artisans`, {
+          const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/artisan-api/artisans`, {
             params: { userId: userResponse.data._id }
           });
           
           if (artisanResponse.data) {
             // Get products for this artisan
-            const productsResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/product-api/products`, {
+            const productsResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/product-api/products`, {
               params: { artisanId: artisanResponse.data._id }
             });
             setProducts(productsResponse.data);
@@ -58,7 +58,7 @@ export default function MyProducts() {
 
   const handleDelete = async (productId: string) => {
     try {
-      await axios.delete(`https://craftconnect-bbdp.onrender.com-api/product-api/products/${productId}`);
+      await axios.delete(`https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`);
       setProducts(current => current.filter(p => p._id !== productId));
       toast.success('Product deleted successfully!');
     } catch (error) {

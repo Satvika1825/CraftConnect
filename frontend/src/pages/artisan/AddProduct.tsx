@@ -59,7 +59,7 @@ export default function AddProduct() {
     };
 
      try {
-      const response = await axios.post('https://craftconnect-bbdp.onrender.com-api/product-api/products', {
+      const response = await axios.post('https://craftconnect-bbdp.onrender.com/product-api/products', {
         artisanId: artisanId,
         name: product.name,
         description: product.description,
