@@ -2,7 +2,6 @@ const express = require('express');
 const userapp = express.Router();
 const expressAsyncHandler = require('express-async-handler');
 const UserModel = require('../Models/UserModel');
-const ActivityModel = require('../Models/ActivityModel');
 const cors = require("cors");
 
 userapp.use(cors({
@@ -10,19 +9,7 @@ userapp.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-// Helper function to log activities
-const logActivity = async (type, userId, details, message) => {
-  try {
-    await ActivityModel.create({
-      type,
-      userId,
-      details,
-      message
-    });
-  } catch (error) {
-    console.error('Error logging activity:', error);
-  }
-};
+
 //API
 userapp.post('/user', expressAsyncHandler(async (req, res) => {
     const { clerkId, email, role, name } = req.body;
@@ -44,16 +31,6 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
     const newUser = new UserModel({ clerkId, email, role, name });
     const savedUser = await newUser.save();
 
-        await logActivity(
-      'user_registered',
-      savedUser._id,
-      {
-        role: savedUser.role,
-        email: savedUser.email,
-        name: savedUser.name
-      },
-      `New ${savedUser.role} registered: ${savedUser.name}`
-    );
 
     res.status(201).send({ message: "User created", user: savedUser });
 }));
