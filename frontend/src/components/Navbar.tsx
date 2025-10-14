@@ -16,10 +16,10 @@ export const Navbar = () => {
   const fetchArtisanId = async () => {
     try {
       // Get user by clerkId
-      const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+      const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
       if (userResponse.data) {
         // Use the new endpoint to get artisan by userId
-        const artisanResponse = await axios.get(`http://localhost:3000/artisan-api/artisans`, {
+        const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/artisan-api/artisans`, {
           params: { userId: userResponse.data._id }
         });
         if (artisanResponse.data) {

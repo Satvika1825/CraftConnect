@@ -45,7 +45,7 @@ export default function CustomerDashboard() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/product-api/products', {
+        const response = await axios.get('https://craftconnect-bbdp.onrender.com-api/product-api/products', {
           params: { approved: true }
         });
         setProducts(response.data);

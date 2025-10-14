@@ -34,10 +34,10 @@ export default function Cart() {
       if (!user) return;
 
       try {
-        const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
         if (!userResponse.data?._id) return;
 
-        const cartResponse = await axios.get(`http://localhost:3000/cart-api/cart/${userResponse.data._id}`);
+        const cartResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/cart-api/cart/${userResponse.data._id}`);
         setCartItems(cartResponse.data);
       } catch (error) {
         console.error('Error fetching cart:', error);
@@ -54,7 +54,7 @@ export default function Cart() {
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     try {
-      await axios.put(`http://localhost:3000/cart-api/cart/${itemId}`, {
+      await axios.put(`https://craftconnect-bbdp.onrender.com-api/cart-api/cart/${itemId}`, {
         quantity: newQuantity
       });
 
@@ -71,7 +71,7 @@ export default function Cart() {
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      await axios.delete(`http://localhost:3000/cart-api/cart/${itemId}`);
+      await axios.delete(`https://craftconnect-bbdp.onrender.com-api/cart-api/cart/${itemId}`);
       setCartItems(current => current.filter(item => item._id !== itemId));
       toast.success('Item removed from cart');
     } catch (error) {
@@ -88,14 +88,14 @@ const handleCheckout = async () => {
 
   try {
     // Get user's MongoDB ID
-    const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+    const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
     if (!userResponse.data?._id) {
       toast.error('User not found');
       return;
     }
 
     // Create order
-    const orderResponse = await axios.post('http://localhost:3000/order-api/orders/create', {
+    const orderResponse = await axios.post('https://craftconnect-bbdp.onrender.com-api/order-api/orders/create', {
       userId: userResponse.data._id,
       items: cartItems,
       total
@@ -104,7 +104,7 @@ const handleCheckout = async () => {
     if (orderResponse.data) {
       // Clear cart after successful order
       await Promise.all(cartItems.map(item => 
-        axios.delete(`http://localhost:3000/cart-api/cart/${item._id}`)
+        axios.delete(`https://craftconnect-bbdp.onrender.com-api/cart-api/cart/${item._id}`)
       ));
       
       setCartItems([]);
