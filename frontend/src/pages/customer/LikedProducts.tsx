@@ -30,11 +30,11 @@ export default function LikedProducts() {
 
       try {
         // Get user's MongoDB ID
-        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
         if (!userResponse.data?._id) return;
 
         // Get liked products
-        const likesResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/like-api/likes/${userResponse.data._id}`);
+        const likesResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/like-api/likes/${userResponse.data._id}`);
         // Extract products from likes data
         const products = likesResponse.data.map((like: any) => like.productId);
         setLikedProducts(products);

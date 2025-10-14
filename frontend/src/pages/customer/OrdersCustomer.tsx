@@ -37,11 +37,11 @@ export default function OrdersCustomer() {
 
       try {
         // Get user's MongoDB ID first
-        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user-api/user/${user.id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
         if (!userResponse.data?._id) return;
 
         // Fetch user's orders
-        const ordersResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/order-api/orders/user/${userResponse.data._id}`);
+        const ordersResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/order-api/orders/user/${userResponse.data._id}`);
         setOrders(ordersResponse.data);
       } catch (error) {
         console.error('Error fetching orders:', error);
