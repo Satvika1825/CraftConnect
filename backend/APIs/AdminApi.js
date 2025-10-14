@@ -14,7 +14,7 @@ adminapp.get("/", (req, res) => {
 });
 
 adminapp.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  origin: ['http://localhost:8080', 'http://localhost:5173','https://craft-connect-blond.vercel.app'],
   methods: ['GET', 'POST'],
   credentials: true
 }))
