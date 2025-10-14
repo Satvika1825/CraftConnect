@@ -33,10 +33,10 @@ export default function ArtisanDashboard() {
 
       try {
         // Get user by clerkId
-        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com-api/user/${user.id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
         if (userResponse.data) {
           // Get artisan profile
-          const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.comartisan-api/artisans`, {
+          const artisanResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/artisan-api/artisans`, {
             params: { userId: userResponse.data._id }
           });
           
