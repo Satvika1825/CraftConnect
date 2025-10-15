@@ -31,8 +31,8 @@ export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
       if (!user) return;
 
       try {
-        const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
-        const likesResponse = await axios.get(`http://localhost:3000/like-api/likes/${userResponse.data._id}`);
+        const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
+        const likesResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/like-api/likes/${userResponse.data._id}`);
         const liked = likesResponse.data.some((like: any) => like.productId._id === product._id);
         setIsLiked(liked);
       } catch (error) {
@@ -50,8 +50,8 @@ export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
     }
 
     try {
-      const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
-      const response = await axios.post('http://localhost:3000/like-api/likes/toggle', {
+      const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
+      const response = await axios.post('https://craftconnect-bbdp.onrender.com/like-api/likes/toggle', {
         userId: userResponse.data._id,
         productId: product._id
       });
@@ -72,7 +72,7 @@ const handleAddToCart = async () => {
 
   try {
     // Get user's MongoDB ID
-    const userResponse = await axios.get(`http://localhost:3000/user-api/user/${user.id}`);
+    const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
     console.log('User response:', userResponse.data); // Debug log
 
     if (!userResponse.data || !userResponse.data._id) {
@@ -81,7 +81,7 @@ const handleAddToCart = async () => {
     }
 
     // Add item to cart
-    const cartResponse = await axios.post('http://localhost:3000/cart-api/cart/add', {
+    const cartResponse = await axios.post('https://craftconnect-bbdp.onrender.com/cart-api/cart/add', {
       userId: userResponse.data._id,
       productId: product._id,
       quantity: 1
