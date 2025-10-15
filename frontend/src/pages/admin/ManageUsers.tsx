@@ -24,7 +24,7 @@ export default function ManageUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('https://craftconnect-bbdp.onrender.com-api/user-api/users');
+        const response = await axios.get('https://craftconnect-bbdp.onrender.com/user-api/users');
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users:', error);

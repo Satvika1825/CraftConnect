@@ -25,7 +25,7 @@ export default function ManageProducts() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get<Product[]>('https://craftconnect-bbdp.onrender.com-api/product-api/products');
+      const response = await axios.get<Product[]>('https://craftconnect-bbdp.onrender.com/product-api/products');
       setProducts(response.data);
     } catch (error: any) {
       console.error('Error fetching products:', error);
@@ -41,7 +41,7 @@ export default function ManageProducts() {
 
   const handleApprove = async (productId: string) => {
     try {
-      await axios.patch(`https://craftconnect-bbdp.onrender.com-api/product-api/products/${productId}`, {
+      await axios.patch(`https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`, {
         approved: true
       });
       

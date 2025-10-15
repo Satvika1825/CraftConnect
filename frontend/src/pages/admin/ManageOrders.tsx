@@ -40,7 +40,7 @@ export default function ManageOrders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('https://craftconnect-bbdp.onrender.com-api/order-api/orders');
+        const response = await axios.get('https://craftconnect-bbdp.onrender.com/order-api/orders');
         setOrders(response.data);
       } catch (error) {
         console.error('Error fetching orders:', error);
@@ -55,7 +55,7 @@ export default function ManageOrders() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
-      await axios.put(`https://craftconnect-bbdp.onrender.com-api/order-api/orders/${orderId}/status`, {
+      await axios.put(`https://craftconnect-bbdp.onrender.com/order-api/orders/${orderId}/status`, {
         status: newStatus
       });
 

@@ -35,9 +35,9 @@ export default function AdminDashboard() {
       try {
         // Fetch stats
         const [usersRes, productsRes, activitiesRes] = await Promise.all([
-          axios.get('https://craftconnect-bbdp.onrender.com-api/user-api/users'),
-          axios.get('https://craftconnect-bbdp.onrender.com-api/product-api/products'),
-          axios.get('https://craftconnect-bbdp.onrender.com-api/admin-api/activities')
+          axios.get('https://craftconnect-bbdp.onrender.com/user-api/users'),
+          axios.get('https://craftconnect-bbdp.onrender.com/product-api/products'),
+          axios.get('https://craftconnect-bbdp.onrender.com/admin-api/activities')
         ]);
 
         setStats({
