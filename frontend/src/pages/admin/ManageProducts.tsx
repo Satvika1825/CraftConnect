@@ -61,7 +61,7 @@ export default function ManageProducts() {
 
   const handleReject = async (productId: string) => {
     try {
-      await axios.delete(`https://craftconnect-bbdp.onrender.com-api/product-api/products/${productId}`);
+      await axios.delete(`https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`);
       
       // Update local state
       setProducts(currentProducts => 

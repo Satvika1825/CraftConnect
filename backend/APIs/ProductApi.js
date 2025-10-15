@@ -8,7 +8,7 @@ const cors = require('cors');
 
 productapp.use(cors(
     { origin: ['http://localhost:8080','https://craft-connect-blond.vercel.app'], // allow requests from any origin
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'], // allow these HTTP methods
+    methods: ['GET', 'POST', 'PATCH', 'DELETE','OPTIONS'], // allow these HTTP methods
     credentials: true } // allow credentials (cookies, authorization headers, etc.)
 ));
 
