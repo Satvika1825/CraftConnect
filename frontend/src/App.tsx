@@ -8,8 +8,10 @@ import { CLERK_PUBLISHABLE_KEY } from '@/lib/clerk';
 import Landing from './pages/Landing';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import Products from './pages/customer/Products';
+import ProductDetail from './pages/customer/Productdetails';
 import LikedProducts from './pages/customer/LikedProducts';
 import Cart from './pages/customer/Cart';
+import CustomerOrders from './pages/customer/OrdersCustomer';
 import ArtisanDashboard from './pages/artisan/ArtisanDashboard';
 import MyProducts from './pages/artisan/MyProducts';
 import AddProduct from './pages/artisan/AddProduct';
@@ -19,7 +21,6 @@ import ManageUsers from './pages/admin/ManageUsers';
 import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import NotFound from './pages/NotFound';
-import OrdersCustomer from './pages/customer/OrdersCustomer';
 
 const queryClient = new QueryClient();
 
@@ -36,9 +37,10 @@ const App = () => (
             {/* Customer Routes */}
             <Route path="/customer" element={<CustomerDashboard />} />
             <Route path="/customer/products" element={<Products />} />
+            <Route path="/customer/products/:id" element={<ProductDetail />} />
             <Route path="/customer/liked" element={<LikedProducts />} />
             <Route path="/customer/cart" element={<Cart />} />
-            <Route path="/customer/orders" element={<OrdersCustomer />} />
+            <Route path="/customer/orders" element={<CustomerOrders />} />
             
             {/* Artisan Routes */}
             <Route path="/artisan" element={<ArtisanDashboard />} />
