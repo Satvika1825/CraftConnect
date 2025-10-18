@@ -149,10 +149,18 @@ productapp.put(
     const { id } = req.params;
     const updates = req.body;
 
-    const product = await productModel.findById(id);
+    // Populate artisanId to access the name property
+    const product = await productModel.findById(id).populate('artisanId');
     if (!product) return res.status(404).send({ message: 'Product not found' });
 
-    // Update product fields directly
+    // Store old values BEFORE updating
+    const oldValues = {
+      name: product.name,
+      price: product.price,
+      category: product.category
+    };
+
+    // Update product fields
     Object.assign(product, updates);
     const updatedProduct = await product.save();
 
@@ -162,18 +170,14 @@ productapp.put(
       userId: req.body.userId,
       details: {
         productId: product._id,
-        oldValues: {
-          name: product.name,
-          price: product.price,
-          category: product.category
-        },
+        oldValues: oldValues, // Old values stored before update
         newValues: {
           name: updatedProduct.name,
           price: updatedProduct.price,
           category: updatedProduct.category
         }
       },
-      message: `Product "${product.name}" was updated by ${product.artisanId.name}`
+      message: `Product "${updatedProduct.name}" was updated by ${product.artisanId?.name || 'Unknown Artisan'}`
     });
 
     res.send({ message: 'Product updated successfully', product: updatedProduct });
