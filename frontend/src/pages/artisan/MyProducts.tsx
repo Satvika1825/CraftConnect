@@ -50,7 +50,7 @@ export default function MyProducts() {
   });
   const [saving, setSaving] = useState(false);
 
-  const categories = ['Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork', 'Painting', 'Other'];
+  const categories = ['Pottery', 'Weaving', 'Jewelry', 'Woodwork', 'Metalwork', 'Painting', 'Other'];
 
   useEffect(() => {
     const fetchProducts = async () => {
