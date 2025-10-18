@@ -149,8 +149,12 @@ productapp.put(
     const { id } = req.params;
     const updates = req.body;
 
-    // Populate artisanId to access the name property
-    const product = await productModel.findById(id).populate('artisanId');
+    // Populate both artisanId and artisanId.userId
+    const product = await productModel.findById(id).populate({
+      path: 'artisanId',
+      populate: { path: 'userId' }
+    });
+    
     if (!product) return res.status(404).send({ message: 'Product not found' });
 
     // Store old values BEFORE updating
@@ -160,30 +164,44 @@ productapp.put(
       category: product.category
     };
 
+    // Remove userId from updates if it exists
+    const { userId, ...productUpdates } = updates;
+
     // Update product fields
-    Object.assign(product, updates);
+    Object.assign(product, productUpdates);
     const updatedProduct = await product.save();
 
-    // Log activity for product update
-    await ActivityModel.create({
-      type: 'product_updated',
-      userId: req.body.userId,
-      details: {
-        productId: product._id,
-        oldValues: oldValues, // Old values stored before update
-        newValues: {
-          name: updatedProduct.name,
-          price: updatedProduct.price,
-          category: updatedProduct.category
-        }
-      },
-      message: `Product "${updatedProduct.name}" was updated by ${product.artisanId?.name || 'Unknown Artisan'}`
-    });
+    // Log activity for product update (with error handling)
+    try {
+      // Use userId from request, or fall back to artisanId.userId
+      const activityUserId = userId || product.artisanId?.userId?._id || product.artisanId?.userId;
+      
+      if (!activityUserId) {
+        console.warn('No userId available for activity logging');
+      } else {
+        await ActivityModel.create({
+          type: 'product_updated',
+          userId: activityUserId,
+          details: {
+            productId: product._id,
+            oldValues: oldValues,
+            newValues: {
+              name: updatedProduct.name,
+              price: updatedProduct.price,
+              category: updatedProduct.category
+            }
+          },
+          message: `Product "${updatedProduct.name}" was updated by ${product.artisanId?.name || 'Unknown Artisan'}`
+        });
+      }
+    } catch (activityError) {
+      console.error('Failed to log activity:', activityError.message);
+      // Don't fail the request - product was updated successfully
+    }
 
     res.send({ message: 'Product updated successfully', product: updatedProduct });
   })
 );
-
 // Delete product
 productapp.delete('/products/:id', expressAsyncHandler(async (req, res) => {
   try {

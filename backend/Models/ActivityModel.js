@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+// Clear any cached model to prevent enum validation issues
+if (mongoose.models.Activity) {
+  delete mongoose.models.Activity;
+  delete mongoose.connection.models.Activity;
+}
+
 const activitySchema = new mongoose.Schema({
   type: {
     type: String,
@@ -33,4 +39,4 @@ const activitySchema = new mongoose.Schema({
   timestamps: true 
 });
 
-module.exports = mongoose.models.Activity || mongoose.model('Activity', activitySchema);
+module.exports = mongoose.model('Activity', activitySchema);
