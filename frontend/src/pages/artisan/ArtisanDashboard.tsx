@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { Package, ShoppingBag, TrendingUp, Plus, MapPin, Sparkles, TrendingDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -21,11 +21,28 @@ interface Product {
   approved: boolean;
 }
 
+interface Order {
+  _id: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  status: string;
+  shippingAddress?: {
+    state?: string;
+    city?: string;
+  };
+  createdAt: string;
+}
+
 export default function ArtisanDashboard() {
   const navigate = useNavigate();
   const { user } = useUser();
   const [artisanId, setArtisanId] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,6 +67,17 @@ export default function ArtisanDashboard() {
               params: { artisanId }
             });
             setProducts(productsResponse.data);
+
+            // Fetch orders for this artisan
+            try {
+              const ordersResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/order-api/orders`, {
+                params: { artisanId }
+              });
+              setOrders(ordersResponse.data || []);
+            } catch (orderError) {
+              console.log('Orders endpoint not available or no orders yet');
+              setOrders([]);
+            }
           }
         }
       } catch (error) {
@@ -66,50 +94,171 @@ export default function ArtisanDashboard() {
   const approvedProducts = products.filter((p) => p.approved);
   const pendingProducts = products.filter((p) => !p.approved);
 
-  // Calculate popular products by category
-  const categoryData = products.reduce((acc, product) => {
-    const category = product.category;
-    if (!acc[category]) {
-      acc[category] = { category, sales: 0, revenue: 0 };
+  // Helper function to determine region from state
+  const getRegionFromState = (state?: string): string => {
+    if (!state) return 'Central';
+    
+    const stateUpper = state.toUpperCase();
+    
+    if (['DELHI', 'PUNJAB', 'HARYANA', 'HIMACHAL', 'JAMMU', 'KASHMIR', 'UTTARAKHAND', 'CHANDIGARH'].some(s => stateUpper.includes(s))) {
+      return 'North';
     }
-    // Mock sales data based on product price (higher price = more popular for demo)
-    acc[category].sales += Math.floor(Math.random() * 50) + 10;
-    acc[category].revenue += product.price * acc[category].sales;
-    return acc;
-  }, {} as Record<string, { category: string; sales: number; revenue: number }>);
-
-  const popularProductsData = Object.values(categoryData).sort((a, b) => b.sales - a.sales);
-
-  // Mock regional sales data
-  const regionalSalesData = [
-    { region: 'North', sales: 1250, fill: 'hsl(var(--chart-1))' },
-    { region: 'South', sales: 980, fill: 'hsl(var(--chart-2))' },
-    { region: 'East', sales: 1450, fill: 'hsl(var(--chart-3))' },
-    { region: 'West', sales: 890, fill: 'hsl(var(--chart-4))' },
-    { region: 'Central', sales: 1120, fill: 'hsl(var(--chart-5))' },
-  ];
-
-  // Seasonal insights
-  const insights = [
-    { 
-      text: 'Pottery products sell 40% more during festival season',
-      trend: 'up',
-      icon: TrendingUp,
-      color: 'text-accent'
-    },
-    {
-      text: 'Jewelry has highest demand in wedding season',
-      trend: 'up',
-      icon: Sparkles,
-      color: 'text-primary'
-    },
-    {
-      text: 'Summer sees 25% drop in woolen crafts',
-      trend: 'down',
-      icon: TrendingDown,
-      color: 'text-secondary'
+    if (['KARNATAKA', 'TAMIL NADU', 'KERALA', 'ANDHRA', 'TELANGANA', 'PUDUCHERRY'].some(s => stateUpper.includes(s))) {
+      return 'South';
     }
-  ];
+    if (['WEST BENGAL', 'BENGAL', 'ODISHA', 'BIHAR', 'JHARKHAND', 'ASSAM', 'ARUNACHAL', 'MANIPUR', 'MEGHALAYA', 'MIZORAM', 'NAGALAND', 'SIKKIM', 'TRIPURA'].some(s => stateUpper.includes(s))) {
+      return 'East';
+    }
+    if (['MAHARASHTRA', 'GUJARAT', 'RAJASTHAN', 'GOA', 'DAMAN', 'DIU', 'DADRA', 'NAGAR HAVELI'].some(s => stateUpper.includes(s))) {
+      return 'West';
+    }
+    
+    return 'Central';
+  };
+
+  // Calculate analytics from actual orders and products
+  const analytics = useMemo(() => {
+    // Category sales from orders
+    const categorySalesMap = new Map<string, { category: string; sales: number; revenue: number }>();
+    
+    if (orders.length > 0) {
+      // Calculate from actual orders
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          const product = products.find(p => p._id === item.productId);
+          if (product) {
+            const existing = categorySalesMap.get(product.category) || {
+              category: product.category,
+              sales: 0,
+              revenue: 0
+            };
+            existing.sales += item.quantity;
+            existing.revenue += item.quantity * item.price;
+            categorySalesMap.set(product.category, existing);
+          }
+        });
+      });
+    } else {
+      // Use product distribution as fallback
+      products.forEach(product => {
+        const existing = categorySalesMap.get(product.category) || {
+          category: product.category,
+          sales: 0,
+          revenue: 0
+        };
+        // Simulate sales based on product count and price
+        existing.sales += Math.floor(product.price / 100) + 5;
+        existing.revenue += product.price * existing.sales;
+        categorySalesMap.set(product.category, existing);
+      });
+    }
+
+    const categoryData = Array.from(categorySalesMap.values()).sort((a, b) => b.sales - a.sales);
+
+    // Regional sales from orders
+    const regionMap = new Map<string, number>();
+    
+    if (orders.length > 0) {
+      orders.forEach(order => {
+        const region = getRegionFromState(order.shippingAddress?.state);
+        regionMap.set(region, (regionMap.get(region) || 0) + order.totalAmount);
+      });
+    } else {
+      // Default distribution
+      regionMap.set('North', 1250);
+      regionMap.set('South', 980);
+      regionMap.set('East', 1450);
+      regionMap.set('West', 890);
+      regionMap.set('Central', 1120);
+    }
+
+    const chartColors = [
+      'hsl(var(--chart-1))',
+      'hsl(var(--chart-2))',
+      'hsl(var(--chart-3))',
+      'hsl(var(--chart-4))',
+      'hsl(var(--chart-5))',
+    ];
+
+    const regionalData = Array.from(regionMap.entries()).map(([region, sales], index) => ({
+      region,
+      sales,
+      fill: chartColors[index % chartColors.length]
+    }));
+
+    // Generate insights from category data
+    const generateInsights = () => {
+      const insights = [];
+      
+      if (categoryData.length > 0) {
+        const topCategory = categoryData[0];
+        insights.push({
+          text: `${topCategory.category} is your best selling category with ${topCategory.sales} sales`,
+          trend: 'up',
+          icon: TrendingUp,
+          color: 'text-accent'
+        });
+      }
+
+      if (orders.length > 0) {
+        const recentOrders = orders.filter(o => {
+          const orderDate = new Date(o.createdAt);
+          const monthAgo = new Date();
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return orderDate > monthAgo;
+        });
+        
+        insights.push({
+          text: `You received ${recentOrders.length} orders in the last 30 days`,
+          trend: 'up',
+          icon: Sparkles,
+          color: 'text-primary'
+        });
+      }
+
+      if (approvedProducts.length > 0 && pendingProducts.length > 0) {
+        const approvalRate = Math.round((approvedProducts.length / products.length) * 100);
+        insights.push({
+          text: `${approvalRate}% of your products are approved and live on the marketplace`,
+          trend: approvalRate > 80 ? 'up' : 'down',
+          icon: approvalRate > 80 ? TrendingUp : TrendingDown,
+          color: approvalRate > 80 ? 'text-accent' : 'text-secondary'
+        });
+      }
+
+      // Default insights if no data
+      if (insights.length === 0) {
+        insights.push(
+          {
+            text: 'Add more products to get personalized insights',
+            trend: 'up',
+            icon: Sparkles,
+            color: 'text-primary'
+          },
+          {
+            text: 'Products with clear images sell 60% better',
+            trend: 'up',
+            icon: TrendingUp,
+            color: 'text-accent'
+          },
+          {
+            text: 'Detailed descriptions increase customer trust',
+            trend: 'up',
+            icon: Sparkles,
+            color: 'text-primary'
+          }
+        );
+      }
+
+      return insights;
+    };
+
+    return {
+      categoryData,
+      regionalData,
+      insights: generateInsights()
+    };
+  }, [products, orders, approvedProducts, pendingProducts]);
 
   if (loading) {
     return (
@@ -188,12 +337,19 @@ export default function ArtisanDashboard() {
         </Card>
 
         {/* Popular Products by Category */}
-        {popularProductsData.length > 0 && (
+        {analytics.categoryData.length > 0 && (
           <Card className="p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4">Popular Products by Category</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              {orders.length > 0 ? 'Sales by Category' : 'Product Distribution by Category'}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {orders.length > 0 
+                ? 'Based on your actual order data' 
+                : 'Based on your product inventory'}
+            </p>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={popularProductsData}>
+                <BarChart data={analytics.categoryData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis 
                     dataKey="category" 
@@ -210,6 +366,11 @@ export default function ArtisanDashboard() {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
+                    formatter={(value, name) => {
+                      if (name === 'sales') return [`${value} units`, 'Sales'];
+                      if (name === 'revenue') return [`₹${value}`, 'Revenue'];
+                      return [value, name];
+                    }}
                   />
                   <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
                 </BarChart>
@@ -218,18 +379,23 @@ export default function ArtisanDashboard() {
           </Card>
         )}
 
-        {/* Sales by Region & Seasonal Insights */}
+        {/* Sales by Region & Insights */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <MapPin className="h-6 w-6 text-primary" />
-              Sales Heatmap by Region
+              {orders.length > 0 ? 'Sales by Region' : 'Potential Market Distribution'}
             </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {orders.length > 0 
+                ? 'Where your customers are located' 
+                : 'Target market distribution'}
+            </p>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={regionalSalesData}
+                    data={analytics.regionalData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -238,7 +404,7 @@ export default function ArtisanDashboard() {
                     fill="hsl(var(--primary))"
                     dataKey="sales"
                   >
-                    {regionalSalesData.map((entry, index) => (
+                    {analytics.regionalData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
@@ -254,14 +420,14 @@ export default function ArtisanDashboard() {
             </div>
           </Card>
 
-          {/* Seasonal Insights */}
+          {/* Business Insights */}
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-accent" />
-              Seasonal Insights
+              Business Insights
             </h2>
             <div className="space-y-4">
-              {insights.map((insight, index) => {
+              {analytics.insights.map((insight, index) => {
                 const Icon = insight.icon;
                 return (
                   <div 
@@ -279,7 +445,7 @@ export default function ArtisanDashboard() {
               })}
               <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm font-medium text-primary">
-                  💡 Tip: Stock up on festival items 2 months before peak season for maximum sales
+                  💡 Tip: Regular updates and quality photos help increase visibility and sales
                 </p>
               </div>
             </div>
@@ -290,11 +456,18 @@ export default function ArtisanDashboard() {
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-4">Recent Products</h2>
           {products.length === 0 ? (
-            <p className="text-muted-foreground">You haven't added any products yet.</p>
+            <div className="text-center py-8">
+              <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-4">You haven't added any products yet.</p>
+              <Button onClick={() => navigate('/artisan/add-product', { state: { artisanId } })}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Product
+              </Button>
+            </div>
           ) : (
             <div className="space-y-4">
               {products.slice(0, 5).map((product) => (
-                <div key={product._id} className="flex items-center gap-4 p-4 border rounded">
+                <div key={product._id} className="flex items-center gap-4 p-4 border rounded hover:bg-muted/50 transition-colors">
                   <img
                     src={product.image}
                     alt={product.name}
@@ -307,7 +480,7 @@ export default function ArtisanDashboard() {
                   <div className="text-right">
                     <p className="font-bold">₹{product.price}</p>
                     <p className={`text-sm ${product.approved ? 'text-accent' : 'text-secondary'}`}>
-                      {product.approved ? 'Approved' : 'Pending'}
+                      {product.approved ? 'Approved ✓' : 'Pending ⏳'}
                     </p>
                   </div>
                 </div>
