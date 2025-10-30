@@ -492,7 +492,9 @@ export default function ArtisanDashboard() {
       </main>
 
       <Footer />
+      <div>
       <AIChatMentor userType="artisan" artisanId={artisanId} userId={user?.id} />
+      </div>
     </div>
   );
 }

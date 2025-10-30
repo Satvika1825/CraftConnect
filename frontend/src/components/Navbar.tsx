@@ -108,6 +108,9 @@ export const Navbar = () => {
             <Link to="/artisan/orders">
               <Button variant="ghost">Orders</Button>
             </Link>
+            <Link to="/artisan/chat">
+              <Button variant="ghost">Orders</Button>
+            </Link>
           </>
         );
       case 'admin':
