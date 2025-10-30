@@ -10,7 +10,7 @@ const cartapp = require('./APIs/CartApi');
 const orderapp = require('./APIs/OrdersApi');   
 const reviewapp = require('./APIs/reviewApi');
 const likeapp = require('./APIs/LikeApi');
-
+const analyticsapp = require('./APIs/analyticsRoutes');
 const port=process.env.PORT ;
 const cors = require('cors');
 app.use(cors({
@@ -48,3 +48,4 @@ app.use('/order-api',orderapp)
 app.use('/review-api',reviewapp)
 app.use('/like-api',likeapp)
 app.use('/activity-api',activityapp)
+app.use('/analytics-api',analyticsapp)

@@ -9,6 +9,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import AIChatMentor from '@/components/ui/AIChatMentor';
 
 interface Product {
   _id: string;
@@ -491,6 +492,7 @@ export default function ArtisanDashboard() {
       </main>
 
       <Footer />
+      <AIChatMentor userType="artisan" artisanId={artisanId} userId={user?.id} />
     </div>
   );
 }
