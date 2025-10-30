@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { Package, ShoppingBag, TrendingUp, Plus, MapPin, Sparkles, TrendingDown } from 'lucide-react';
+import { Package, ShoppingBag, TrendingUp, Plus, MapPin, Sparkles, TrendingDown, MessageCircle, X } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -45,6 +45,7 @@ export default function ArtisanDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -492,9 +493,60 @@ export default function ArtisanDashboard() {
       </main>
 
       <Footer />
-      <div>
-      <AIChatMentor userType="artisan" artisanId={artisanId} userId={user?.id} />
-      </div>
+      
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:scale-110 z-40"
+        aria-label="Open AI Assistant"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </button>
+
+      {/* Chat Sidebar */}
+     {isChatOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            onClick={() => setIsChatOpen(false)}
+          />
+          
+          {/* Side Panel */}
+          <div className="fixed right-0 top-0 h-full w-full md:w-[500px] bg-background border-l shadow-2xl z-50 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-card">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg">AI Business Assistant</h2>
+                  <p className="text-xs text-muted-foreground">Here to help grow your craft business</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsChatOpen(false)}
+                className="hover:bg-muted"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            {/* Chat Content */}
+            <div className="flex-1 overflow-hidden">
+              <AIChatMentor 
+                userType="artisan" 
+                artisanId={artisanId} 
+                userId={user?.id}
+                isEmbedded={true}  
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -2,13 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Send, X, Sparkles, User, Bot } from 'lucide-react';
+import { Send, Sparkles, User, Bot } from 'lucide-react';
 import axios from 'axios';
 import { useUser } from '@clerk/clerk-react';
 
-export default function AIChatMentor({ userType = 'customer', artisanId = null }) {
+export default function AIChatMentor({ 
+  userType = 'customer', 
+  artisanId = null, 
+  isEmbedded = false // New prop to indicate if it's embedded in a sidebar
+}) {
   const { user } = useUser();
-  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -87,132 +90,102 @@ export default function AIChatMentor({ userType = 'customer', artisanId = null }
     setInput(question);
   };
 
-  return (
-    <>
-      {/* Floating Chat Button */}
-      {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      )}
-
-      {/* Chat Window */}
-      {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[600px] shadow-2xl z-50 flex flex-col">
-          {/* Header */}
-          <div className="bg-primary text-primary-foreground p-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              <div>
-                <h3 className="font-semibold">AI Mentor</h3>
-                <p className="text-xs opacity-90">
-                  {userType === 'artisan' ? 'Business Advisor' : 'Shopping Assistant'}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-              className="text-primary-foreground hover:bg-primary-foreground/20"
+  // If embedded, just return the chat interface without the floating button and card wrapper
+  if (isEmbedded) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.role === 'assistant' && (
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-primary-foreground" />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[75%] rounded-lg p-3 ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background border'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  <p className="text-xs opacity-60 mt-1">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-                {message.role === 'user' && (
-                  <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-                    <User className="h-4 w-4 text-accent-foreground" />
-                  </div>
-                )}
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex gap-2 justify-start">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+              {message.role === 'assistant' && (
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                   <Bot className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <div className="bg-background border rounded-lg p-3">
-                  <div className="flex gap-1">
-                    <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                </div>
+              )}
+              <div
+                className={`max-w-[75%] rounded-lg p-3 ${
+                  message.role === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-background border'
+                }`}
+              >
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-xs opacity-60 mt-1">
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Questions */}
-          {messages.length <= 1 && (
-            <div className="p-3 border-t bg-background">
-              <p className="text-xs text-muted-foreground mb-2">Quick questions:</p>
-              <div className="flex flex-wrap gap-2">
-                {quickQuestions.map((question, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => handleQuickQuestion(question)}
-                  >
-                    {question}
-                  </Button>
-                ))}
+              {message.role === 'user' && (
+                <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+                  <User className="h-4 w-4 text-accent-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex gap-2 justify-start">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                <Bot className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <div className="bg-background border rounded-lg p-3">
+                <div className="flex gap-1">
+                  <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
+        </div>
 
-          {/* Input */}
-          <div className="p-4 border-t bg-background rounded-b-lg">
-            <div className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask me anything..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button
-                onClick={handleSend}
-                disabled={isLoading || !input.trim()}
-                size="icon"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+        {/* Quick Questions */}
+        {messages.length <= 1 && (
+          <div className="p-3 border-t bg-background">
+            <p className="text-xs text-muted-foreground mb-2">Quick questions:</p>
+            <div className="flex flex-wrap gap-2">
+              {quickQuestions.map((question, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => handleQuickQuestion(question)}
+                >
+                  {question}
+                </Button>
+              ))}
             </div>
           </div>
-        </Card>
-      )}
-    </>
-  );
+        )}
+
+        {/* Input */}
+        <div className="p-4 border-t bg-background">
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Ask me anything..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || !input.trim()}
+              size="icon"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original standalone version (for backwards compatibility)
+  return null; // Not used in the dashboard anymore
 }
