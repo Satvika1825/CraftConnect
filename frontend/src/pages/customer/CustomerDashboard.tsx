@@ -10,9 +10,12 @@ import embroidery from '@/assets/embroidery.jpg';
 import woodwork from '@/assets/woodwork.jpg';
 import jewelry from '@/assets/jewelry.jpg';
 import painting from '@/assets/painting.jpg';
-import { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { MessageCircle, X } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
+import AIChatMentor from '@/components/ui/AIChatMentor';
 
 const crafts = [
   { name: 'Pottery', image: pottery, category: 'Pottery' },
@@ -39,8 +42,10 @@ interface Product {
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -185,12 +190,67 @@ export default function CustomerDashboard() {
           </div>
         </section>
       )}
- {loading && (
-    <div className="py-20 flex justify-center">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-    </div>
-  )}
+      
+      {loading && (
+        <div className="py-20 flex justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      )}
+      
       <Footer />
+
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 bg-accent text-accent-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:scale-110 z-40 animate-bounce-subtle"
+        aria-label="Open AI Shopping Assistant"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </button>
+
+      {/* Chat Sidebar */}
+      {isChatOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            onClick={() => setIsChatOpen(false)}
+          />
+          
+          {/* Side Panel */}
+          <div className="fixed right-0 top-0 h-full w-full md:w-[500px] bg-background border-l shadow-2xl z-50 flex flex-col animate-in slide-in-from-right">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-card">
+              <div className="flex items-center gap-3">
+                <div className="bg-accent/10 p-2 rounded-full">
+                  <MessageCircle className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg">AI Shopping Assistant</h2>
+                  <p className="text-xs text-muted-foreground">Ask me about products, gifts & more!</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsChatOpen(false)}
+                className="hover:bg-muted"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            {/* Chat Content */}
+            <div className="flex-1 overflow-hidden">
+              <AIChatMentor 
+                userType="customer" 
+                userId={user?.id}
+                isEmbedded={true}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
