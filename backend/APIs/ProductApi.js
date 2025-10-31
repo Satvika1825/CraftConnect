@@ -197,27 +197,49 @@ productapp.put(
 
 // Backend - Validate ObjectId
 
-productapp.delete('/product-api/products/:id', async (req, res) => {
+// DELETE route - make sure this exists!
+productapp.delete('/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
+    console.log('DELETE request received for product ID:', id);
+    
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'Invalid product ID format' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid product ID format' 
+      });
     }
     
+    // Find and delete the product
     const product = await Product.findByIdAndDelete(id);
     
     if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Product not found' 
+      });
     }
     
-    res.status(200).json({ message: 'Product deleted successfully' });
+    console.log('Product deleted successfully:', product);
+    
+    return res.status(200).json({ 
+      success: true,
+      message: 'Product deleted successfully',
+      data: product
+    });
+    
   } catch (error) {
-    console.error('Delete error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error deleting product:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
+
+
 productapp.put('/products/:id/approve', expressAsyncHandler(async (req, res) => {
   try {
     const product = await productModel.findByIdAndUpdate(
