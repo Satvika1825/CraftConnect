@@ -38,6 +38,7 @@ interface Order {
   createdAt: string;
 }
 
+
 export default function ArtisanDashboard() {
   const navigate = useNavigate();
   const { user } = useUser();

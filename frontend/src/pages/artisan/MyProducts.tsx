@@ -176,16 +176,27 @@ export default function MyProducts() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+      try {
+    const response = await axios.delete(
+      `https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 5000 // 5 second timeout
+      }
+    );
 
-    try {
-      await axios.delete(`https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`);
-      setProducts(current => current.filter(p => p._id !== productId));
-      toast.success('Product deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      toast.error('Failed to delete product');
+    if (response.data.success) {
+      setProducts(products.filter(p => p._id !== productId));
+      toast.success('Product deleted successfully');
+    } else {
+      throw new Error(response.data.message || 'Failed to delete product');
     }
+  } catch (error: any) {
+    console.error('Error deleting product:', error);
+    toast.error(error.response?.data?.message || 'Failed to delete product');
+  }
   };
 
   if (loading) {
