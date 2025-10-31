@@ -49,6 +49,7 @@ export default function MyProducts() {
     stock: ''
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const categories = ['Pottery', 'Weaving', 'Jewelry', 'Woodwork', 'Metalwork', 'Painting', 'Other'];
 
@@ -176,27 +177,48 @@ export default function MyProducts() {
   };
 
   const handleDelete = async (productId: string) => {
-      try {
-    const response = await axios.delete(
-      `https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`,
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000 // 5 second timeout
-      }
-    );
+    // Add confirmation dialog
+    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      return;
+    }
 
-    if (response.data.success) {
+    setDeleting(productId);
+    
+    try {
+      await axios.delete(
+        `https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`
+      );
+
+      // Update local state immediately after successful delete
       setProducts(products.filter(p => p._id !== productId));
       toast.success('Product deleted successfully');
-    } else {
-      throw new Error(response.data.message || 'Failed to delete product');
+      
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      
+      // Handle different error scenarios
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data?.message 
+          || error.response.data?.error 
+          || `Failed to delete product (Status: ${error.response.status})`;
+        toast.error(errorMessage);
+        
+        console.error('Server error details:', {
+          status: error.response.status,
+          data: error.response.data,
+          productId: productId
+        });
+      } else if (error.request) {
+        // Request made but no response
+        toast.error('No response from server. Please check your connection.');
+      } else {
+        // Other errors
+        toast.error('Failed to delete product. Please try again.');
+      }
+    } finally {
+      setDeleting(null);
     }
-  } catch (error: any) {
-    console.error('Error deleting product:', error);
-    toast.error(error.response?.data?.message || 'Failed to delete product');
-  }
   };
 
   if (loading) {
@@ -252,6 +274,7 @@ export default function MyProducts() {
                       size="sm" 
                       className="flex-1 gap-2"
                       onClick={() => handleEditClick(product)}
+                      disabled={deleting === product._id}
                     >
                       <Edit className="h-4 w-4" />
                       Edit
@@ -261,9 +284,10 @@ export default function MyProducts() {
                       size="sm"
                       className="flex-1 gap-2"
                       onClick={() => handleDelete(product._id)}
+                      disabled={deleting === product._id}
                     >
                       <Trash2 className="h-4 w-4" />
-                      Delete
+                      {deleting === product._id ? 'Deleting...' : 'Delete'}
                     </Button>
                   </div>
                 </div>
