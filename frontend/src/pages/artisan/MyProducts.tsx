@@ -70,6 +70,14 @@ export default function MyProducts() {
             const productsResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/product-api/products`, {
               params: { artisanId: artisanResponse.data._id }
             });
+            
+            console.log('Fetched products:', productsResponse.data);
+            console.log('Product IDs:', productsResponse.data.map((p: Product) => ({
+              id: p._id,
+              length: p._id?.length,
+              name: p.name
+            })));
+            
             setProducts(productsResponse.data);
           }
         }
@@ -177,6 +185,12 @@ export default function MyProducts() {
   };
 
   const handleDelete = async (productId: string) => {
+    console.log('Attempting to delete product:', {
+      productId,
+      idLength: productId?.length,
+      idType: typeof productId
+    });
+
     // Add confirmation dialog
     if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
       return;
@@ -185,9 +199,10 @@ export default function MyProducts() {
     setDeleting(productId);
     
     try {
-      await axios.delete(
-        `https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`
-      );
+      const deleteUrl = `https://craftconnect-bbdp.onrender.com/product-api/products/${productId}`;
+      console.log('DELETE request to:', deleteUrl);
+      
+      await axios.delete(deleteUrl);
 
       // Update local state immediately after successful delete
       setProducts(products.filter(p => p._id !== productId));
@@ -207,7 +222,8 @@ export default function MyProducts() {
         console.error('Server error details:', {
           status: error.response.status,
           data: error.response.data,
-          productId: productId
+          productId: productId,
+          url: error.config?.url
         });
       } else if (error.request) {
         // Request made but no response
@@ -264,6 +280,7 @@ export default function MyProducts() {
                   </div>
                   <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{product.description}</p>
                   <p className="text-xs text-muted-foreground mb-2">Category: {product.category}</p>
+                  <p className="text-xs text-gray-400 mb-2 font-mono">ID: {product._id}</p>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-primary font-bold">₹{product.price}</span>
                     <span className="text-sm text-muted-foreground">Stock: {product.stock}</span>
@@ -283,7 +300,14 @@ export default function MyProducts() {
                       variant="destructive"
                       size="sm"
                       className="flex-1 gap-2"
-                      onClick={() => handleDelete(product._id)}
+                      onClick={() => {
+                        console.log('Delete button clicked for product:', {
+                          _id: product._id,
+                          name: product.name,
+                          fullProduct: product
+                        });
+                        handleDelete(product._id);
+                      }}
                       disabled={deleting === product._id}
                     >
                       <Trash2 className="h-4 w-4" />
