@@ -194,38 +194,30 @@ productapp.put(
     res.send({ message: 'Product updated successfully', product: updatedProduct });
   })
 );
-// Delete product
-productapp.delete('/products/:id', expressAsyncHandler(async (req, res) => {
+
+// Backend - Validate ObjectId
+
+productapp.delete('/product-api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.body; // Add userId to request body
-
-    const product = await productModel.findById(id).populate('artisanId');
+    
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid product ID format' });
+    }
+    
+    const product = await Product.findByIdAndDelete(id);
     
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ error: 'Product not found' });
     }
-
-    await product.deleteOne();
-
-    // Log activity for product deletion
-    await ActivityModel.create({
-      type: 'product_deleted',
-      userId,
-      details: {
-        productId: product._id,
-        productName: product.name,
-        artisanId: product.artisanId._id
-      },
-      message: `Product "${product.name}" by ${product.artisanId.name} was deleted`
-    });
-
-    res.json({ message: 'Product deleted successfully' });
+    
+    res.status(200).json({ message: 'Product deleted successfully' });
   } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ message: 'Failed to delete product' });
+    console.error('Delete error:', error);
+    res.status(500).json({ error: error.message });
   }
-}));
+});
 productapp.put('/products/:id/approve', expressAsyncHandler(async (req, res) => {
   try {
     const product = await productModel.findByIdAndUpdate(
