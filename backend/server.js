@@ -52,4 +52,4 @@ app.use('/like-api',likeapp)
 app.use('/activity-api',activityapp)
 app.use('/analytics-api',analyticsapp)
 app.use('/api', chatRoutes);
-app.use('/image-analyzer', imageAnalyzerRoutes);
+app.use('/api', imageAnalyzerRoutes);

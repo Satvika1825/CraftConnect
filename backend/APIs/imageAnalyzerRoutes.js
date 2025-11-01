@@ -2,7 +2,40 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const cors = require('cors'); // Add cors import
 const { analyzeCraftImage } = require('../services/imageAnalyzerService');
+
+// Updated CORS configuration
+router.use(cors({
+    origin: [
+      'http://localhost:8080',
+      'http://localhost:5173',
+      'https://craft-connect-blond.vercel.app'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true
+}));
+
+// Multer error handling middleware
+const uploadMiddleware = (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        success: false,
+        error: 'File upload error',
+        message: err.message
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid file type',
+        message: 'Only image files are allowed'
+      });
+    }
+    next();
+  });
+};
 
 // Configure multer for memory storage
 const upload = multer({
@@ -19,8 +52,8 @@ const upload = multer({
   }
 });
 
-// Analyze image endpoint
-router.post('/analyze-craft-image', upload.single('image'), async (req, res) => {
+// Updated analyze image endpoint with error handling
+router.post('/analyze-craft-image', uploadMiddleware, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
@@ -57,6 +90,7 @@ router.get('/analyze-health', (req, res) => {
   res.json({
     success: true,
     message: 'Image analyzer service is running',
+    timestamp: new Date().toISOString(),
     methods: ['gemini-api', 'huggingface-api', 'rule-based']
   });
 });
