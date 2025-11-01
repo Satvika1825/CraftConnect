@@ -188,7 +188,7 @@ export default function Products() {
               <ProductCard
                 key={product._id}
                 product={product}
-                onViewDetails={() => navigate(`/products/${product._id}`)}
+                onViewDetails={() => navigate(`/customer/products/${product._id}`)}
               />
             ))}
           </div>
