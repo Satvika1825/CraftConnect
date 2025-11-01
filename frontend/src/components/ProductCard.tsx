@@ -3,7 +3,6 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Toast } from 'react-hot-toast';
 import { useUser } from '@clerk/clerk-react';
 import { useState, useEffect } from 'react';
 
@@ -22,11 +21,12 @@ interface ProductCardProps {
   product: Product;
   onViewDetails?: () => void;
 }
+
 export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
-  const {user}=useUser();
+  const { user } = useUser();
   const [isLiked, setIsLiked] = useState(false);
 
- useEffect(() => {
+  useEffect(() => {
     const checkLikeStatus = async () => {
       if (!user) return;
 
@@ -39,11 +39,10 @@ export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
         console.error('Error checking like status:', error);
       }
     };
-     checkLikeStatus();
+    checkLikeStatus();
   }, [user, product._id]);
 
-  
-   const handleToggleLike = async () => {
+  const handleToggleLike = async () => {
     if (!user) {
       toast.error('Please login to like products');
       return;
@@ -64,88 +63,87 @@ export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
     }
   };
 
-const handleAddToCart = async () => {
-  if (!user) {
-    toast.error('Please login to add items to cart');
-    return;
-  }
-
-  try {
-    // Get user's MongoDB ID
-    const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
-    console.log('User response:', userResponse.data); // Debug log
-
-    if (!userResponse.data || !userResponse.data._id) {
-      toast.error('User not found');
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.error('Please login to add items to cart');
       return;
     }
 
-    // Add item to cart
-    const cartResponse = await axios.post('https://craftconnect-bbdp.onrender.com/cart-api/cart/add', {
-      userId: userResponse.data._id,
-      productId: product._id,
-      quantity: 1
-    });
+    try {
+      const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
+      
+      if (!userResponse.data?._id) {
+        toast.error('User not found');
+        return;
+      }
 
-    console.log('Cart response:', cartResponse.data); // Debug log
+      const cartResponse = await axios.post('https://craftconnect-bbdp.onrender.com/cart-api/cart/add', {
+        userId: userResponse.data._id,
+        productId: product._id,
+        quantity: 1
+      });
 
-    if (cartResponse.data) {
-      toast.success('Added to cart!');
-    } else {
-      throw new Error('Failed to add to cart');
+      if (cartResponse.data) {
+        toast.success('Added to cart!');
+      } else {
+        throw new Error('Failed to add to cart');
+      }
+    } catch (error: any) {
+      console.error('Error adding to cart:', error);
+      toast.error(error.response?.data?.message || 'Failed to add item to cart');
     }
-  } catch (error: any) {
-    console.error('Error adding to cart:', error);
-    toast.error(error.response?.data?.message || 'Failed to add item to cart');
-  }
-};
- 
+  };
 
   return (
-    <Card className="group overflow-hidden border-2 hover:border-primary transition-all duration-500 hover-lift relative">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-terracotta via-mustard to-teal transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+    <Card className="group overflow-hidden border hover:border-primary transition-all duration-300 hover:shadow-lg relative">
+      <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary/50 via-primary to-primary/50 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
       
-      <div className="relative aspect-square overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-700"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <Button
           size="icon"
-          className="absolute top-3 right-3 bg-background/90 hover:bg-background backdrop-blur-sm border-2 border-border hover:border-primary transition-all duration-300 hover:scale-110 shadow-lg"
+          className="absolute top-2 right-2 h-8 w-8 bg-background/90 hover:bg-background backdrop-blur-sm border hover:border-primary transition-all duration-300 hover:scale-110"
           onClick={handleToggleLike}
         >
-          <Heart className={`h-4 w-4 transition-all duration-300 ${isLiked ? 'fill-destructive text-destructive scale-125' : ''}`} />
+          <Heart className={`h-3.5 w-3.5 transition-all duration-300 ${isLiked ? 'fill-destructive text-destructive scale-125' : ''}`} />
         </Button>
-        <div className="absolute bottom-3 left-3 px-3 py-1 bg-primary/90 backdrop-blur-sm rounded-full border border-primary-foreground/20">
-          <span className="text-xs font-semibold text-primary-foreground">{product.category}</span>
+        <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-primary/90 backdrop-blur-sm rounded-full">
+          <span className="text-xs font-medium text-primary-foreground">{product.category}</span>
         </div>
       </div>
       
-      <CardContent className="p-5">
-        <h3 className="font-bold text-xl mb-2 line-clamp-1 group-hover:text-primary transition-colors duration-300">{product.name}</h3>
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{product.description}</p>
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">₹{product.price}</span>
-          <div className="flex items-center gap-1 text-mustard">
-            <span className="text-sm">★★★★★</span>
-          </div>
+      <CardContent className="p-3">
+        <h3 className="font-bold text-base mb-1 line-clamp-1 group-hover:text-primary transition-colors duration-300">{product.name}</h3>
+        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">₹{product.price}</span>
+          <span className="text-xs text-muted-foreground">By {product.artisanName}</span>
         </div>
       </CardContent>
       
-      <CardFooter className="p-5 pt-0 gap-3">
-        <Button onClick={onViewDetails} variant="outline" className="flex-1 border-2 hover:border-primary transition-all duration-300">
-          View Details
+      <CardFooter className="p-3 pt-0 gap-2 flex-col sm:flex-row">
+        <Button 
+          onClick={onViewDetails} 
+          variant="outline" 
+          size="sm" 
+          className="w-full sm:flex-1 hover:border-primary transition-all duration-300"
+        >
+          View
         </Button>
-        <Button onClick={handleAddToCart} className="flex-1 gap-2 bg-primary hover:bg-primary/90 font-semibold transition-all duration-300 hover:scale-105 shadow-md">
-          <ShoppingCart className="h-4 w-4" />
-          Add to Cart
+        <Button 
+          onClick={handleAddToCart} 
+          size="sm" 
+          className="w-full sm:flex-1 gap-1.5 bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105"
+        >
+          <ShoppingCart className="h-3.5 w-3.5" />
+          Add
         </Button>
       </CardFooter>
-      
-      <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-primary/5 to-transparent rounded-tl-full transform translate-x-10 translate-y-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-500" />
     </Card>
   );
 };
