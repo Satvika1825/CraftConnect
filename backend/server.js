@@ -25,6 +25,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Increase payload size limits
+app.use(exp.json({ limit: '10mb' }));
+app.use(exp.urlencoded({ 
+  limit: '10mb',
+  extended: true 
+}));
 const mongoose=require('mongoose');
 const { activityapp } = require('./APIs/ActivityApi');
 

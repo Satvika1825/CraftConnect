@@ -21,6 +21,7 @@ import ManageUsers from './pages/admin/ManageUsers';
 import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import AIChatMentor from '@/components/ui/AIChatMentor';
+import ArtisanProductDetail from '@/pages/artisan/ProductDetails';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -49,7 +50,7 @@ const App = () => (
             <Route path="/artisan/add-product" element={<AddProduct />} />
             <Route path="/artisan/orders" element={<ArtisanOrders />} />
             <Route path="/artisan/chat" element={<AIChatMentor />} />
-            
+            <Route path="/artisan/products/:id" element={<ArtisanProductDetail />} />
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<ManageUsers />} />

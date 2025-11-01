@@ -5,11 +5,13 @@ import { Footer } from '@/components/Footer';
 import { ProductCard } from '@/components/ProductCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const categories = ['All', 'Pottery', 'Weaving', 'Embroidery', 'Woodwork', 'Jewelry', 'Painting'];
+const categories = ['All', 'Pottery', 'Weaving', 'Embroidery', 'Woodwork', 'Jewelry', 'Painting', 'Basket Weaving', 'Wood Carving', 'Textile Craft', 'Metalwork'];
 
 interface Product {
   _id: string;
@@ -26,24 +28,28 @@ interface Product {
 
 export default function Products() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'All');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'name');
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch products from database
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const response = await axios.get('https://craftconnect-bbdp.onrender.com/product-api/products', {
           params: { approved: true }
         });
         setProducts(response.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching products:', error);
-        toast.error('Failed to load products');
+        setError(error.response?.data?.message || 'Failed to load products');
+        toast.error('Failed to load products. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -52,12 +58,14 @@ export default function Products() {
     fetchProducts();
   }, []);
 
+  // Update URL params when filters change
   useEffect(() => {
-    const category = searchParams.get('category');
-    if (category) {
-      setSelectedCategory(category);
-    }
-  }, [searchParams]);
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (selectedCategory !== 'All') params.set('category', selectedCategory);
+    if (sortBy !== 'name') params.set('sort', sortBy);
+    setSearchParams(params);
+  }, [searchQuery, selectedCategory, sortBy, setSearchParams]);
 
   const filteredProducts = products
     .filter((p) => {
@@ -78,12 +86,28 @@ export default function Products() {
       }
     });
 
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('All');
+    setSortBy('name');
+    setSearchParams({});
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-serif font-bold mb-8">Browse Products</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="h-[200px] w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))}
+          </div>
         </main>
         <Footer />
       </div>
@@ -95,7 +119,13 @@ export default function Products() {
       <Navbar />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-serif font-bold mb-8">Browse Products</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-serif font-bold">Browse Products</h1>
+          <Button variant="outline" size="sm" onClick={resetFilters}>
+            <Filter className="h-4 w-4 mr-2" />
+            Reset Filters
+          </Button>
+        </div>
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -134,10 +164,23 @@ export default function Products() {
           </Select>
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-8">
+            <p className="text-destructive text-lg mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        )}
+
         {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {!error && filteredProducts.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">No products found</p>
+            <p className="text-muted-foreground text-lg mb-4">No products found</p>
+            <Button variant="outline" onClick={resetFilters}>
+              Clear Filters
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -145,7 +188,7 @@ export default function Products() {
               <ProductCard
                 key={product._id}
                 product={product}
-                onViewDetails={() => navigate(`/customer/products/${product._id}`)}
+                onViewDetails={() => navigate(`/products/${product._id}`)}
               />
             ))}
           </div>
