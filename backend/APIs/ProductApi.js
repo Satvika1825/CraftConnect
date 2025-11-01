@@ -31,58 +31,53 @@ const logActivity = async (type, userId, details, message) => {
 };
 
 // POST /products → create product
-productapp.post(
-  '/products',
-  expressAsyncHandler(async (req, res) => {
-    const productdata = req.body;
-    
-    try {
-      // 1. Check if artisan exists
-      const artisan = await artisanModel.findById(productdata.artisanId);
-      if (!artisan) {
-        return res.status(400).send({ message: 'Invalid artisanId' });
-      }
+productapp.post('/products', expressAsyncHandler(async (req, res) => {
+  try {
+    const {
+      artisanId,
+      name,
+      description,
+      category,
+      price,
+      stock,
+      image,
+      approved
+    } = req.body;
 
-      // 2. Check if product already exists (same artisan + same name)
-      const existingProduct = await productModel.findOne({
-        artisanId: productdata.artisanId,
-        name: productdata.name,
+    // Validate required fields
+    if (!artisanId || !name || !price || !category) {
+      return res.status(400).json({
+        message: 'Missing required fields'
       });
-
-      if (existingProduct) {
-        return res
-          .status(409) // Conflict
-          .send({ message: 'Product with this name already exists for this artisan' });
-      }
-
-      // 3. Create new product
-      const newProduct = new productModel(productdata);
-      const productDoc = await newProduct.save();
-      const populatedProduct = await productDoc.populate('artisanId', 'name email');
-
-      // Use the helper function
-      await logActivity(
-        'product_added',
-        productdata.artisanId,
-        {
-          productId: productDoc._id,
-          productName: productDoc.name,
-          category: productDoc.category,
-          price: productDoc.price
-        },
-        `New product "${productDoc.name}" added by ${populatedProduct.artisanId.name}`
-      );
-
-      res.status(201).send({
-        message: 'Product created',
-        product: populatedProduct,
-      });
-    } catch (error) {
-      console.error('Product creation error:', error);
-      res.status(500).send({ message: 'Failed to create product', error: error.message });
     }
-  })
-);
+
+    // Create new product
+    const newProduct = new productModel({
+      artisanId,
+      name,
+      description: description || 'No description provided',
+      category,
+      price: Number(price),
+      stock: Number(stock) || 0,
+      image: image || 'default-image-url',
+      approved: false
+    });
+
+    const savedProduct = await newProduct.save();
+
+    res.status(201).json({
+      message: 'Product created successfully',
+      product: savedProduct
+    });
+
+  } catch (error) {
+    console.error('Product creation error:', error);
+    res.status(500).json({
+      message: 'Failed to create product',
+      error: error.message
+    });
+  }
+}));
 // Update product approval status
 productapp.patch('/products/:id', expressAsyncHandler(async (req, res) => {
   try {
