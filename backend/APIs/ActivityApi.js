@@ -5,7 +5,7 @@ const ActivityModel = require('../Models/ActivityModel');
 const cors = require('cors');
 
 activityapp.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173'],
+  origin: ['http://localhost:8080', 'http://localhost:5173','http://localhost:8081'],
   methods: ['GET', 'POST'],
   credentials: true
 }));

@@ -10,7 +10,7 @@ router.use(cors({
     origin: [
       'http://localhost:8080',
       'http://localhost:5173',
-      'https://craft-connect-blond.vercel.app'
+      'https://craft-connect-blond.vercel.app','http://localhost:8081'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type'],

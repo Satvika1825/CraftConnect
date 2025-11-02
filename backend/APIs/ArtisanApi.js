@@ -6,7 +6,7 @@ const userModel = require("../Models/UserModel");
 const cors = require("cors");
 
 artisanapp.use(cors(
-    { origin: ['http://localhost:8080','https://craft-connect-blond.vercel.app'],// allow requests from any origin
+    { origin: ['http://localhost:8080','https://craft-connect-blond.vercel.app','http://localhost:8081'],// allow requests from any origin
     methods: ['GET', 'POST', 'PATCH', 'DELETE'], // allow these HTTP methods
     credentials: true } // allow credentials (cookies, authorization headers, etc.)
 ));

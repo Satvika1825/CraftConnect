@@ -17,7 +17,7 @@ const port=process.env.PORT ;
 const cors = require('cors');
 app.use(cors({
   origin: [
-    'http://localhost:8080',
+    'http://localhost:8080','http://localhost:8081',
     'http://localhost:5173',
     'https://craft-connect-blond.vercel.app'
   ],

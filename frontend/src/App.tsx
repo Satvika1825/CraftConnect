@@ -22,6 +22,7 @@ import ManageProducts from './pages/admin/ManageProducts';
 import ManageOrders from './pages/admin/ManageOrders';
 import AIChatMentor from '@/components/ui/AIChatMentor';
 import ArtisanProductDetail from '@/pages/artisan/ProductDetails';
+import ManageAnnouncements from './pages/admin/ManageAnnouncements';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/admin/users" element={<ManageUsers />} />
             <Route path="/admin/products" element={<ManageProducts />} />
             <Route path="/admin/orders" element={<ManageOrders />} />
+            <Route path="/admin/announcements" element={<ManageAnnouncements />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
