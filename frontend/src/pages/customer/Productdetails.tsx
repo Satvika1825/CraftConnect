@@ -4,7 +4,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, ShoppingCart, ArrowLeft, Package, User } from 'lucide-react';
+import { Heart, ShoppingCart, ArrowLeft, Package, User, Share2, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductCard } from '@/components/ProductCard';
 import {
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/carousel";
 import { useUser } from '@clerk/clerk-react';
 import axios from 'axios';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Product {
   _id: string;
@@ -30,14 +32,30 @@ interface Product {
   stock: number;
 }
 
+interface Review {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    clerkId: string;
+  };
+  productId: string;
+  rating: number;
+  review: string;
+  images?: string[];
+  createdAt: string;
+}
+
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useUser();
   const [product, setProduct] = useState<Product | null>(null);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [averageRating, setAverageRating] = useState(0);
 
   // Fetch product details
   useEffect(() => {
@@ -55,6 +73,9 @@ export default function ProductDetail() {
           const filtered = similarResponse.data.filter((p: Product) => p._id !== id).slice(0, 6);
           setSimilarProducts(filtered);
         }
+
+        // Fetch reviews
+        await fetchReviews();
       } catch (error) {
         console.error('Error fetching product:', error);
         toast.error('Failed to load product');
@@ -66,6 +87,24 @@ export default function ProductDetail() {
     fetchProduct();
     window.scrollTo(0, 0);
   }, [id]);
+
+  // Fetch reviews
+  const fetchReviews = async () => {
+    if (!id) return;
+    
+    try {
+      const response = await axios.get(`https://craftconnect-bbdp.onrender.com/review-api/reviews/product/${id}`);
+      setReviews(response.data);
+      
+      // Calculate average rating
+      if (response.data.length > 0) {
+        const avg = response.data.reduce((sum: number, review: Review) => sum + review.rating, 0) / response.data.length;
+        setAverageRating(avg);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
 
   // Check like status
   useEffect(() => {
@@ -165,8 +204,49 @@ export default function ProductDetail() {
     }
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} - a handcrafted product by ${product.artisanName}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success('Shared successfully!');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const handleViewArtisan = () => {
+    navigate(`/customer/artisan/${product.artisanId}`);
+  };
+
   const handleSimilarProductClick = (productId: string) => {
     navigate(`/customer/products/${productId}`);
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-5 w-5 ${
+              star <= rating
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -204,6 +284,17 @@ export default function ProductDetail() {
               <h1 className="text-4xl font-serif font-bold mb-4">
                 {product.name}
               </h1>
+              
+              {/* Rating Display */}
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-3 mb-4">
+                  {renderStars(Math.round(averageRating))}
+                  <span className="text-sm text-muted-foreground">
+                    {averageRating.toFixed(1)} ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
+                  </span>
+                </div>
+              )}
+
               <p className="text-3xl font-bold text-primary mb-6">
                 ₹{product.price.toFixed(2)}
               </p>
@@ -231,14 +322,15 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 cursor-pointer hover:bg-accent p-2 rounded-lg transition-colors" onClick={handleViewArtisan}>
                 <User className="h-5 w-5 text-muted-foreground" />
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">Artisan</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-primary hover:underline">
                     {product.artisanName}
                   </p>
                 </div>
+                <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
               </div>
             </div>
 
@@ -254,22 +346,107 @@ export default function ProductDetail() {
                 {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
               </Button>
 
-              <Button
-                onClick={handleToggleLike}
-                variant="outline"
-                className="w-full h-12 text-lg"
-                size="lg"
-              >
-                <Heart
-                  className={`mr-2 h-5 w-5 ${
-                    isLiked ? 'fill-current text-red-500' : ''
-                  }`}
-                />
-                {isLiked ? 'Remove from Favorites' : 'Add to Favorites'}
-              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={handleToggleLike}
+                  variant="outline"
+                  className="h-12"
+                  size="lg"
+                >
+                  <Heart
+                    className={`mr-2 h-5 w-5 ${
+                      isLiked ? 'fill-current text-red-500' : ''
+                    }`}
+                  />
+                  {isLiked ? 'Favorited' : 'Favorite'}
+                </Button>
+
+                <Button
+                  onClick={handleShare}
+                  variant="outline"
+                  className="h-12"
+                  size="lg"
+                >
+                  <Share2 className="mr-2 h-5 w-5" />
+                  Share
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <section className="mt-20 border-t pt-12">
+          <div className="mb-8">
+            <h2 className="text-3xl font-serif font-bold mb-2">
+              Customer Reviews
+            </h2>
+            <p className="text-muted-foreground">
+              See what others are saying about this product
+            </p>
+          </div>
+
+          {/* Reviews List */}
+          <div className="space-y-6">
+            {reviews.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Star className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground text-lg mb-2">No reviews yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Be the first to review this product! Purchase and share your experience.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              reviews.map((review) => (
+                <Card key={review._id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.userId.name}`} />
+                        <AvatarFallback>{review.userId.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-semibold">{review.userId.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(review.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          {renderStars(review.rating)}
+                        </div>
+                        <p className="text-muted-foreground leading-relaxed mb-3">
+                          {review.review}
+                        </p>
+                        
+                        {/* Review Images */}
+                        {review.images && review.images.length > 0 && (
+                          <div className="flex gap-2 mt-3 flex-wrap">
+                            {review.images.map((image, index) => (
+                              <img
+                                key={index}
+                                src={image}
+                                alt={`Review ${index + 1}`}
+                                className="w-24 h-24 object-cover rounded-lg border hover:scale-105 transition-transform cursor-pointer"
+                                onClick={() => window.open(image, '_blank')}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </section>
 
         {/* Similar Products Section */}
         {similarProducts.length > 0 && (
