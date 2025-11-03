@@ -13,6 +13,7 @@ const likeapp = require('./APIs/LikeApi');
 const analyticsapp = require('./APIs/analyticsRoutes');
 const chatRoutes = require('./APIs/chatapi');
 const imageAnalyzerRoutes = require('./APIs/imageAnalyzerRoutes');
+const reviewRoutes =require('./APIs/reviewApi.js');
 const port=process.env.PORT ;
 const cors = require('cors');
 app.use(cors({
@@ -60,3 +61,4 @@ app.use('/activity-api',activityapp)
 app.use('/analytics-api',analyticsapp)
 app.use('/api', chatRoutes);
 app.use('/api', imageAnalyzerRoutes);
+app.use('/review-api', reviewRoutes);
