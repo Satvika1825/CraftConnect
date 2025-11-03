@@ -24,7 +24,7 @@ import AIChatMentor from '@/components/ui/AIChatMentor';
 import ArtisanProductDetail from '@/pages/artisan/ProductDetails';
 import ManageAnnouncements from './pages/admin/ManageAnnouncements';
 import NotFound from './pages/NotFound';
-
+import { UserSync } from '@/components/UserSync';
 const queryClient = new QueryClient();
 
 const App = () => (
