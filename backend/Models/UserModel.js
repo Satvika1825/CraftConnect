@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   clerkId: { 
     type: String, 
     required: true,
-    unique: true 
+    unique: true // This already creates an index
   },
   name: { 
     type: String 
@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   email: { 
     type: String, 
     required: true, 
-    unique: true 
+    unique: true // This already creates an index
   },
   password: { 
     type: String 
@@ -21,12 +21,11 @@ const userSchema = new mongoose.Schema({
   role: { 
     type: String, 
     enum: ["artisan", "customer", "admin"], 
-    default: "customer" // Fixed: was "consumer", should be "customer" to match enum
+    default: "customer"
   },
   approved: {
     type: Boolean,
     default: function() {
-      // Artisans need admin approval, others are auto-approved
       return this.role !== 'artisan';
     }
   },
@@ -42,7 +41,7 @@ const userSchema = new mongoose.Schema({
   },
   profileImage: { 
     type: String 
-  }, // URL
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 
@@ -53,12 +52,15 @@ const userSchema = new mongoose.Schema({
   }
 }, { 
   strict: "throw",
-  timestamps: true // Automatically manages createdAt and updatedAt
+  timestamps: true
 });
 
-// Index for faster queries
-userSchema.index({ clerkId: 1 });
-userSchema.index({ email: 1 });
+// Only index fields that DON'T have unique: true
+// DON'T add these (they cause duplicate warnings):
+// userSchema.index({ clerkId: 1 }); ❌
+// userSchema.index({ email: 1 });   ❌
+
+// Only add indexes for non-unique fields:
 userSchema.index({ role: 1 });
 userSchema.index({ approved: 1 });
 
@@ -66,7 +68,6 @@ userSchema.index({ approved: 1 });
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();
   
-  // Only hash if password exists
   if (this.password) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

@@ -4,12 +4,6 @@ const expressAsyncHandler = require('express-async-handler');
 const UserModel = require('../Models/UserModel');
 const cors = require("cors");
 
-userapp.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173','https://craft-connect-blond.vercel.app','http://localhost:8081'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials: true
-}));
-
 // Helper function for activity logging (optional)
 const logActivity = async (type, userId, details, message) => {
   try {
@@ -31,6 +25,12 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
     const userInDb = await UserModel.findOne({ clerkId });
 
     if (userInDb) {
+        // User exists - update name if it's different (in case they changed it in Google)
+        if (userInDb.name !== name && name) {
+            userInDb.name = name;
+            await userInDb.save();
+        }
+        
         if (userInDb.role === role) {
             return res.status(200).send({ message: "User exists", user: userInDb });
         } else {
@@ -38,11 +38,12 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
         }
     }
 
+    // Create new user with name from Google/Clerk
     const newUser = new UserModel({ 
       clerkId, 
       email, 
       role, 
-      name,
+      name: name || email.split('@')[0], // Use name from Google, fallback to email username
       approved: role === 'artisan' ? false : true // Artisans need approval
     });
     const savedUser = await newUser.save();
@@ -51,7 +52,7 @@ userapp.post('/user', expressAsyncHandler(async (req, res) => {
       'user_registered',
       savedUser._id,
       { role: savedUser.role },
-      `New ${role} registered: ${name}`
+      `New ${role} registered: ${name || email}`
     );
 
     res.status(201).send({ message: "User created", user: savedUser });
