@@ -28,105 +28,141 @@ const crafts = [
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
   const { userRole, setUserRole } = useStore();
   const { toast } = useToast();
   const [showArtisanForm, setShowArtisanForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [artisanDetails, setArtisanDetails] = useState({
     shopName: '',
     bio: '',
     craftType: '',
     location: ''
   });
+
+  // Single useEffect to check user role
   useEffect(() => {
     const checkUserRole = async () => {
-      if (isSignedIn && user) {
-        try {
-          const response = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
-          if (response.data.role) {
-            setUserRole(response.data.role);
-            navigate(`/${response.data.role}`);
-          }
-        } catch (error) {
-           if (error.response?.status === 404) {
-          // User doesn't exist yet, show role selection
-          setUserRole(null);
-          setShowArtisanForm(false);
-        } else {
-          console.error('Error fetching user role:', error);
-          toast({
-            title: "Error",
-            description: "Could not fetch user data",
-            variant: "destructive"
-          });
-        }
-        }finally {
-        setIsLoading(false);
+      console.log('Checking user role...', { isLoaded, isSignedIn, user: user?.id });
+      
+      // Wait for Clerk to load
+      if (!isLoaded) {
+        return;
       }
-      }else{
-      setIsLoading(false);
+
+      // If not signed in, stop loading
+      if (!isSignedIn) {
+        setIsLoading(false);
+        return;
+      }
+
+      // If signed in, check backend for role
+      if (user) {
+        try {
+          console.log('Fetching user from backend:', user.id);
+          const response = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
+          
+          if (response.data && response.data.role) {
+            console.log('User found with role:', response.data.role);
+            setUserRole(response.data.role);
+            // Navigate to appropriate dashboard
+            navigate(`/${response.data.role}`);
+          } else {
+            console.log('User found but no role set');
+            setIsLoading(false);
+          }
+        } catch (error: any) {
+          if (error.response?.status === 404) {
+            // User doesn't exist yet, show role selection
+            console.log('User not found in backend, showing role selection');
+            setUserRole(null);
+            setShowArtisanForm(false);
+          } else {
+            console.error('Error fetching user role:', error);
+            toast({
+              title: "Error",
+              description: "Could not fetch user data",
+              variant: "destructive"
+            });
+          }
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
       }
     };
 
     checkUserRole();
-  }, [isSignedIn, user, navigate, setUserRole]);
-
-  useEffect(() => {
-    if (!isSignedIn && userRole) {
-      setUserRole(null);
-    } else if (isSignedIn && userRole) {
-      navigate(`/${userRole}`);
-    }
-  }, [isSignedIn, userRole, navigate, setUserRole]);
-
-  // Add loading state check
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  useEffect(() => {
-    if (!isSignedIn && userRole) {
-      setUserRole(null);
-    } else if (isSignedIn && userRole) {
-      navigate(`/${userRole}`);
-    }
-  }, [isSignedIn, userRole, navigate, setUserRole]);
+  }, [isLoaded, isSignedIn, user?.id, navigate, setUserRole]);
 
   const handleRoleSelection = async (role: 'customer' | 'artisan' | 'admin') => {
-    try {
-     const response= await axios.post('https://craftconnect-bbdp.onrender.com/user-api/user', {
-      clerkId: user?.id,
-      email: user?.emailAddresses?.[0]?.emailAddress || '',
-      role,
-      name: user?.username || '',
-    }, {
-        headers: { 'Content-Type': 'application/json' }
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'Please sign in first',
+        variant: 'destructive'
       });
-      if(response.data && response.data.user){
+      return;
+    }
+
+    setIsSubmitting(true);
+    console.log('Selecting role:', role, 'for user:', user.id);
+
+    try {
+      // Create user with role in backend
+      const userPayload = {
+        clerkId: user.id,
+        email: user.emailAddresses?.[0]?.emailAddress || user.primaryEmailAddress?.emailAddress || '',
+        name: user.fullName || user.firstName || user.username || 'User',
+        role,
+      };
+
+      console.log('Creating user with payload:', userPayload);
+
+      const response = await axios.post(
+        'https://craftconnect-bbdp.onrender.com/user-api/user',
+        userPayload,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      console.log('User created:', response.data);
+
+      // Set role in store immediately
+      setUserRole(role);
+
+      // If artisan, show form to collect additional details
       if (role === 'artisan') {
         setShowArtisanForm(true);
       } else {
-       
-        navigate(`/${role}`);
+        // For customer or admin, navigate immediately
+        toast({
+          title: 'Success!',
+          description: `Welcome as ${role}!`,
+        });
+        setTimeout(() => {
+          navigate(`/${role}`);
+        }, 500);
       }
-    }
     } catch (error: any) {
+      console.error('Error creating user:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Could not create user. Try again.',
+        description: error.response?.data?.message || error.message || 'Could not create user. Please try again.',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleArtisanSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     const { shopName, bio, craftType, location } = artisanDetails;
+    
     if (!shopName || !bio || !craftType || !location) {
       toast({
         title: "Missing Information",
@@ -135,29 +171,72 @@ export default function Landing() {
       });
       return;
     }
-    try {
-      await axios.post('https://craftconnect-bbdp.onrender.com/artisan-api/artisan', {
-        userId: user.id,
-        shopName,
-        bio,
-        craftType,
-        location
-      }, {
-        headers: { 'Content-Type': 'application/json' }
+
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'User not found',
+        variant: 'destructive'
       });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // First, get the user's _id from backend
+      const userResponse = await axios.get(`https://craftconnect-bbdp.onrender.com/user-api/user/${user.id}`);
+      
+      if (!userResponse.data || !userResponse.data._id) {
+        throw new Error('User not found in backend');
+      }
+
+      // Create artisan profile
+      const artisanPayload = {
+        userId: userResponse.data._id,
+        name: shopName,
+        email: user.emailAddresses?.[0]?.emailAddress || user.primaryEmailAddress?.emailAddress,
+        bio,
+        specialty: craftType,
+        location,
+      };
+
+      console.log('Creating artisan with payload:', artisanPayload);
+
+      await axios.post(
+        'https://craftconnect-bbdp.onrender.com/artisan-api/artisans',
+        artisanPayload,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
       toast({
         title: "Welcome!",
         description: "Your artisan profile has been created"
       });
-      navigate('/artisan');
+
+      setTimeout(() => {
+        navigate('/artisan');
+      }, 500);
     } catch (error: any) {
+      console.error('Error creating artisan profile:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || "There was an issue creating your artisan profile. Please try again.",
+        description: error.response?.data?.message || "Could not create your artisan profile. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Render landing page if NOT signed in
   if (!isSignedIn) {
@@ -289,87 +368,94 @@ export default function Landing() {
     );
   }
 
-  // Show role selection & artisan form only if signed in and role not set
-  if (isSignedIn) {
-    if (showArtisanForm) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-card to-background pattern-grid p-4">
-          <Card className="p-10 max-w-2xl w-full border-2 hover:border-primary transition-all duration-500 shadow-xl relative overflow-hidden animate-fade-in">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-terracotta via-mustard to-teal" />
-            <div className="text-center mb-8">
-              <div className="inline-block mb-4 animate-bounce-subtle">
-                <span className="text-6xl">🎨</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                Artisan Details
-              </h2>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                Tell us about your craft and shop
-              </p>
+  // Show artisan form if user selected artisan role
+  if (isSignedIn && showArtisanForm) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-card to-background pattern-grid p-4">
+        <Card className="p-10 max-w-2xl w-full border-2 hover:border-primary transition-all duration-500 shadow-xl relative overflow-hidden animate-fade-in">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-terracotta via-mustard to-teal" />
+          <div className="text-center mb-8">
+            <div className="inline-block mb-4 animate-bounce-subtle">
+              <span className="text-6xl">🎨</span>
             </div>
-            <form onSubmit={handleArtisanSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="shopName" className="text-lg font-semibold">Shop Name *</Label>
-                <Input
-                  id="shopName"
-                  placeholder="Enter your shop name"
-                  value={artisanDetails.shopName}
-                  onChange={(e) => setArtisanDetails({ ...artisanDetails, shopName: e.target.value })}
-                  className="h-12 text-lg border-2 focus:border-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="craftType" className="text-lg font-semibold">Craft Type *</Label>
-                <Input
-                  id="craftType"
-                  placeholder="e.g., Pottery, Weaving, Jewelry"
-                  value={artisanDetails.craftType}
-                  onChange={(e) => setArtisanDetails({ ...artisanDetails, craftType: e.target.value })}
-                  className="h-12 text-lg border-2 focus:border-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location" className="text-lg font-semibold">Location *</Label>
-                <Input
-                  id="location"
-                  placeholder="City, State"
-                  value={artisanDetails.location}
-                  onChange={(e) => setArtisanDetails({ ...artisanDetails, location: e.target.value })}
-                  className="h-12 text-lg border-2 focus:border-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio" className="text-lg font-semibold">Bio *</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Tell us about your craft, experience, and what makes your work special"
-                  value={artisanDetails.bio}
-                  onChange={(e) => setArtisanDetails({ ...artisanDetails, bio: e.target.value })}
-                  className="min-h-32 text-lg border-2 focus:border-primary resize-none"
-                />
-              </div>
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowArtisanForm(false)}
-                  className="flex-1 h-14 text-lg border-2"
-                >
-                  Back
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 h-14 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all duration-300 hover:scale-105"
-                >
-                  Continue →
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      );
-    }
-if(isSignedIn && !userRole && !showArtisanForm) {
+            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+              Artisan Details
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              Tell us about your craft and shop
+            </p>
+          </div>
+          <form onSubmit={handleArtisanSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="shopName" className="text-lg font-semibold">Shop Name *</Label>
+              <Input
+                id="shopName"
+                placeholder="Enter your shop name"
+                value={artisanDetails.shopName}
+                onChange={(e) => setArtisanDetails({ ...artisanDetails, shopName: e.target.value })}
+                className="h-12 text-lg border-2 focus:border-primary"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="craftType" className="text-lg font-semibold">Craft Type *</Label>
+              <Input
+                id="craftType"
+                placeholder="e.g., Pottery, Weaving, Jewelry"
+                value={artisanDetails.craftType}
+                onChange={(e) => setArtisanDetails({ ...artisanDetails, craftType: e.target.value })}
+                className="h-12 text-lg border-2 focus:border-primary"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location" className="text-lg font-semibold">Location *</Label>
+              <Input
+                id="location"
+                placeholder="City, State"
+                value={artisanDetails.location}
+                onChange={(e) => setArtisanDetails({ ...artisanDetails, location: e.target.value })}
+                className="h-12 text-lg border-2 focus:border-primary"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-lg font-semibold">Bio *</Label>
+              <Textarea
+                id="bio"
+                placeholder="Tell us about your craft, experience, and what makes your work special"
+                value={artisanDetails.bio}
+                onChange={(e) => setArtisanDetails({ ...artisanDetails, bio: e.target.value })}
+                className="min-h-32 text-lg border-2 focus:border-primary resize-none"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowArtisanForm(false)}
+                className="flex-1 h-14 text-lg border-2"
+                disabled={isSubmitting}
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 h-14 text-lg bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all duration-300 hover:scale-105"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Creating Profile...' : 'Continue →'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show role selection if signed in but no role yet
+  if (isSignedIn && !userRole) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-card to-background pattern-grid p-4">
         <Card className="p-10 max-w-2xl w-full border-2 hover:border-primary transition-all duration-500 shadow-xl relative overflow-hidden">
@@ -390,6 +476,7 @@ if(isSignedIn && !userRole && !showArtisanForm) {
               onClick={() => handleRoleSelection('customer')}
               variant="outline"
               className="w-full h-20 text-lg border-2 hover:border-primary hover:bg-primary/5 transition-all duration-300 hover:scale-105 group"
+              disabled={isSubmitting}
             >
               <span className="mr-3 text-2xl group-hover:scale-110 transition-transform">🛍️</span>
               <span className="font-semibold">Customer - Shop Handicrafts</span>
@@ -398,6 +485,7 @@ if(isSignedIn && !userRole && !showArtisanForm) {
               onClick={() => handleRoleSelection('artisan')}
               variant="outline"
               className="w-full h-20 text-lg border-2 hover:border-secondary hover:bg-secondary/5 transition-all duration-300 hover:scale-105 group"
+              disabled={isSubmitting}
             >
               <span className="mr-3 text-2xl group-hover:scale-110 transition-transform">🎨</span>
               <span className="font-semibold">Artisan - Sell Your Crafts</span>
@@ -406,6 +494,7 @@ if(isSignedIn && !userRole && !showArtisanForm) {
               onClick={() => handleRoleSelection('admin')}
               variant="outline"
               className="w-full h-20 text-lg border-2 hover:border-accent hover:bg-accent/5 transition-all duration-300 hover:scale-105 group"
+              disabled={isSubmitting}
             >
               <span className="mr-3 text-2xl group-hover:scale-110 transition-transform">⚙️</span>
               <span className="font-semibold">Admin - Manage Platform</span>
@@ -415,8 +504,7 @@ if(isSignedIn && !userRole && !showArtisanForm) {
       </div>
     );
   }
-  }
 
-  // Optionally, features/shop for signed-in users with role (already handled by navigation above)
+  // This shouldn't normally be reached, but just in case
   return null;
 }
